@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { CategoryTotal, ExpenseSummaryData } from '@/src/utils/expenseSummary';
 import { formatYen } from '@/src/utils/settlement';
@@ -13,6 +14,10 @@ export function ExpenseSummary({
   meCategoryTotals,
   partnerCategoryTotals,
 }: ExpenseSummaryData) {
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isMeCategoryOpen, setIsMeCategoryOpen] = useState(false);
+  const [isPartnerCategoryOpen, setIsPartnerCategoryOpen] = useState(false);
+
   return (
     <>
       <View style={styles.summaryCards}>
@@ -25,12 +30,24 @@ export function ExpenseSummary({
 
       {categoryTotals.length > 0 && (
         <View style={styles.categorySummary}>
-          <Text style={styles.sectionTitle}>カテゴリ別合計</Text>
-          <CategoryTotalList items={categoryTotals} />
-          <Text style={styles.subsectionTitle}>自分のカテゴリ別合計</Text>
-          <CategoryTotalList items={meCategoryTotals} />
-          <Text style={styles.subsectionTitle}>相手のカテゴリ別合計</Text>
-          <CategoryTotalList items={partnerCategoryTotals} />
+          <CollapsibleCategoryTotal
+            isOpen={isCategoryOpen}
+            items={categoryTotals}
+            title="カテゴリ別合計"
+            onToggle={() => setIsCategoryOpen((current) => !current)}
+          />
+          <CollapsibleCategoryTotal
+            isOpen={isMeCategoryOpen}
+            items={meCategoryTotals}
+            title="自分のカテゴリ別合計"
+            onToggle={() => setIsMeCategoryOpen((current) => !current)}
+          />
+          <CollapsibleCategoryTotal
+            isOpen={isPartnerCategoryOpen}
+            items={partnerCategoryTotals}
+            title="相手のカテゴリ別合計"
+            onToggle={() => setIsPartnerCategoryOpen((current) => !current)}
+          />
         </View>
       )}
     </>
@@ -42,6 +59,28 @@ function SummaryCard({ label, amount }: { label: string; amount: number }) {
     <View style={styles.summaryCard}>
       <Text style={styles.summaryCardLabel}>{label}</Text>
       <Text style={styles.summaryCardAmount}>{formatYen(amount)}円</Text>
+    </View>
+  );
+}
+
+function CollapsibleCategoryTotal({
+  isOpen,
+  items,
+  title,
+  onToggle,
+}: {
+  isOpen: boolean;
+  items: CategoryTotal[];
+  title: string;
+  onToggle: () => void;
+}) {
+  return (
+    <View style={styles.categorySection}>
+      <Pressable style={styles.categoryHeader} onPress={onToggle}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <Text style={styles.toggleText}>{isOpen ? '閉じる' : '開く'}</Text>
+      </Pressable>
+      {isOpen && <CategoryTotalList items={items} />}
     </View>
   );
 }
@@ -94,11 +133,25 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 16,
   },
+  categorySection: {
+    borderTopColor: '#EEEEEE',
+    borderTopWidth: 1,
+    paddingVertical: 10,
+  },
+  categoryHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   sectionTitle: {
     color: '#222222',
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: 10,
+  },
+  toggleText: {
+    color: '#2563EB',
+    fontSize: 13,
+    fontWeight: '700',
   },
   subsectionTitle: {
     color: '#374151',
