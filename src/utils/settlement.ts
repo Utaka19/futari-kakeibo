@@ -1,7 +1,9 @@
 import type { Expense, Settlement } from '@/src/types/expense';
 
 export function calculateSettlement(expenses: Expense[]): Settlement {
-  const splitExpenses = expenses.filter((expense) => expense.isShared && expense.isSplit);
+  const splitExpenses = expenses.filter(
+    (expense) => expense.isShared && expense.isSplit && !expense.isSettled,
+  );
   const targetTotal = splitExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const mePaid = splitExpenses
     .filter((expense) => expense.payer === 'me')

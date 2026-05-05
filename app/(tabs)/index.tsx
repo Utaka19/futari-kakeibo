@@ -13,13 +13,18 @@ import {
   View,
 } from 'react-native';
 
-import type { Expense, Payer } from '@/src/types/expense';
+import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
 import { calculateSettlement, formatYen } from '@/src/utils/settlement';
+
+const categories: ExpenseCategory[] = ['食費', '日用品', '交通費', 'その他'];
 
 export default function HomeScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [amountText, setAmountText] = useState('');
   const [payer, setPayer] = useState<Payer>('me');
+  const [category, setCategory] = useState<ExpenseCategory>('食費');
+  const [memo, setMemo] = useState('');
+  const [date, setDate] = useState(formatDateInput(new Date()));
   const [isShared, setIsShared] = useState(true);
   const [isSplit, setIsSplit] = useState(true);
 
@@ -37,12 +42,21 @@ export default function HomeScreen() {
       id: Date.now().toString(),
       amount,
       payer,
+      category,
+      memo: memo.trim(),
+      date,
       isShared,
       isSplit,
+      isSettled: false,
     };
 
     setExpenses((currentExpenses) => [newExpense, ...currentExpenses]);
     setAmountText('');
+    setMemo('');
+  };
+
+  const deleteExpense = (id: string) => {
+    setExpenses((currentExpenses) => currentExpenses.filter((expense) => expense.id !== id));
   };
 
   return (
@@ -75,6 +89,34 @@ export default function HomeScreen() {
             />
           </View>
 
+          <Text style={styles.label}>カテゴリ</Text>
+          <View style={styles.categoryGrid}>
+            {categories.map((item) => (
+              <SegmentButton
+                key={item}
+                active={category === item}
+                label={item}
+                onPress={() => setCategory(item)}
+              />
+            ))}
+          </View>
+
+          <Text style={styles.label}>メモ</Text>
+          <TextInput
+            value={memo}
+            onChangeText={setMemo}
+            placeholder="例: ランチ"
+            style={[styles.input, styles.memoInput]}
+          />
+
+          <Text style={styles.label}>日付</Text>
+          <TextInput
+            value={date}
+            onChangeText={setDate}
+            placeholder="例: 2026-05-05"
+            style={styles.input}
+          />
+
           <ToggleRow label="共有" value={isShared} onValueChange={setIsShared} />
           <ToggleRow label="折半" value={isSplit} onValueChange={setIsSplit} />
 
@@ -102,7 +144,7 @@ export default function HomeScreen() {
           keyExtractor={(item) => item.id}
           ListHeaderComponent={<Text style={styles.sectionTitle}>支出一覧</Text>}
           ListEmptyComponent={<Text style={styles.emptyText}>まだ支出がありません。</Text>}
-          renderItem={({ item }) => <ExpenseItem expense={item} />}
+          renderItem={({ item }) => <ExpenseItem expense={item} onDelete={deleteExpense} />}
           contentContainerStyle={styles.listContent}
         />
       </KeyboardAvoidingView>
@@ -143,18 +185,41 @@ function ToggleRow({
   );
 }
 
-function ExpenseItem({ expense }: { expense: Expense }) {
+function ExpenseItem({
+  expense,
+  onDelete,
+}: {
+  expense: Expense;
+  onDelete: (id: string) => void;
+}) {
   return (
     <View style={styles.expenseItem}>
-      <View>
+      <View style={styles.expenseContent}>
         <Text style={styles.expenseAmount}>{formatYen(expense.amount)}円</Text>
+        <Text style={styles.expenseCategory}>
+          {expense.category} / {expense.date}
+        </Text>
+        {!!expense.memo && <Text style={styles.expenseMemo}>{expense.memo}</Text>}
         <Text style={styles.expenseMeta}>支払者: {expense.payer === 'me' ? '自分' : '相手'}</Text>
       </View>
-      <Text style={styles.expenseBadge}>
-        {expense.isShared && expense.isSplit ? '折半対象' : '対象外'}
-      </Text>
+      <View style={styles.expenseActions}>
+        <Text style={styles.expenseBadge}>
+          {expense.isShared && expense.isSplit && !expense.isSettled ? '折半対象' : '対象外'}
+        </Text>
+        <Pressable style={styles.deleteButton} onPress={() => onDelete(expense.id)}>
+          <Text style={styles.deleteButtonText}>削除</Text>
+        </Pressable>
+      </View>
     </View>
   );
+}
+
+function formatDateInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 }
 
 const styles = StyleSheet.create({
@@ -201,16 +266,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  memoInput: {
+    fontSize: 16,
+  },
   segment: {
     backgroundColor: '#EEEEEE',
     borderRadius: 8,
     flexDirection: 'row',
     padding: 4,
   },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   segmentButton: {
     alignItems: 'center',
     borderRadius: 6,
     flex: 1,
+    minWidth: 92,
     paddingVertical: 10,
   },
   segmentButtonActive: {
@@ -279,7 +353,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   expenseItem: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     flexDirection: 'row',
@@ -287,15 +361,35 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 14,
   },
+  expenseContent: {
+    flex: 1,
+    paddingRight: 12,
+  },
   expenseAmount: {
     color: '#222222',
     fontSize: 18,
     fontWeight: '700',
   },
+  expenseCategory: {
+    color: '#374151',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 5,
+  },
+  expenseMemo: {
+    color: '#555555',
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
   expenseMeta: {
     color: '#666666',
     fontSize: 13,
     marginTop: 4,
+  },
+  expenseActions: {
+    alignItems: 'flex-end',
+    gap: 8,
   },
   expenseBadge: {
     backgroundColor: '#EEF2F7',
@@ -306,5 +400,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 8,
     paddingVertical: 6,
+  },
+  deleteButton: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  deleteButtonText: {
+    color: '#991B1B',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
