@@ -221,6 +221,8 @@ export default function HomeScreen() {
             sharedAmount={expenseSummary.sharedAmount}
             splitAmount={expenseSummary.splitAmount}
             categoryTotals={expenseSummary.categoryTotals}
+            meCategoryTotals={expenseSummary.meCategoryTotals}
+            partnerCategoryTotals={expenseSummary.partnerCategoryTotals}
           />
 
           <ExpenseForm

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import type { ExpenseSummaryData } from '@/src/utils/expenseSummary';
+import type { CategoryTotal, ExpenseSummaryData } from '@/src/utils/expenseSummary';
 import { formatYen } from '@/src/utils/settlement';
 
 export function ExpenseSummary({
@@ -10,6 +10,8 @@ export function ExpenseSummary({
   sharedAmount,
   splitAmount,
   categoryTotals,
+  meCategoryTotals,
+  partnerCategoryTotals,
 }: ExpenseSummaryData) {
   return (
     <>
@@ -24,12 +26,11 @@ export function ExpenseSummary({
       {categoryTotals.length > 0 && (
         <View style={styles.categorySummary}>
           <Text style={styles.sectionTitle}>カテゴリ別合計</Text>
-          {categoryTotals.map((item) => (
-            <View key={item.category} style={styles.categoryTotalRow}>
-              <Text style={styles.categoryTotalLabel}>{item.category}</Text>
-              <Text style={styles.categoryTotalAmount}>{formatYen(item.amount)}円</Text>
-            </View>
-          ))}
+          <CategoryTotalList items={categoryTotals} />
+          <Text style={styles.subsectionTitle}>自分のカテゴリ別合計</Text>
+          <CategoryTotalList items={meCategoryTotals} />
+          <Text style={styles.subsectionTitle}>相手のカテゴリ別合計</Text>
+          <CategoryTotalList items={partnerCategoryTotals} />
         </View>
       )}
     </>
@@ -42,6 +43,23 @@ function SummaryCard({ label, amount }: { label: string; amount: number }) {
       <Text style={styles.summaryCardLabel}>{label}</Text>
       <Text style={styles.summaryCardAmount}>{formatYen(amount)}円</Text>
     </View>
+  );
+}
+
+function CategoryTotalList({ items }: { items: CategoryTotal[] }) {
+  if (items.length === 0) {
+    return <Text style={styles.emptyText}>まだ支出がありません</Text>;
+  }
+
+  return (
+    <>
+      {items.map((item) => (
+        <View key={item.category} style={styles.categoryTotalRow}>
+          <Text style={styles.categoryTotalLabel}>{item.category}</Text>
+          <Text style={styles.categoryTotalAmount}>{formatYen(item.amount)}円</Text>
+        </View>
+      ))}
+    </>
   );
 }
 
@@ -81,6 +99,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 10,
+  },
+  subsectionTitle: {
+    color: '#374151',
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  emptyText: {
+    color: '#777777',
+    fontSize: 13,
+    paddingVertical: 8,
   },
   categoryTotalRow: {
     alignItems: 'center',

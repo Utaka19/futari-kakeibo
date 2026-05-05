@@ -12,6 +12,8 @@ export type ExpenseSummaryData = {
   sharedAmount: number;
   splitAmount: number;
   categoryTotals: CategoryTotal[];
+  meCategoryTotals: CategoryTotal[];
+  partnerCategoryTotals: CategoryTotal[];
 };
 
 export function calculateExpenseSummary(
@@ -32,13 +34,24 @@ export function calculateExpenseSummary(
     .filter((expense) => expense.isShared && expense.isSplit && !expense.isSettled)
     .reduce((sum, expense) => sum + expense.amount, 0);
   const categoryTotals = categories
-    .map((category) => ({
-      category,
-      amount: expenses
-        .filter((expense) => expense.category === category)
-        .reduce((sum, expense) => sum + expense.amount, 0),
-    }))
-    .filter((item) => item.amount > 0);
+    .map((category) => calculateCategoryTotal(expenses, category))
+    .filter(hasAmount);
+  const meCategoryTotals = categories
+    .map((category) =>
+      calculateCategoryTotal(
+        expenses.filter((expense) => expense.payer === 'me'),
+        category,
+      ),
+    )
+    .filter(hasAmount);
+  const partnerCategoryTotals = categories
+    .map((category) =>
+      calculateCategoryTotal(
+        expenses.filter((expense) => expense.payer === 'partner'),
+        category,
+      ),
+    )
+    .filter(hasAmount);
 
   return {
     totalAmount,
@@ -47,5 +60,20 @@ export function calculateExpenseSummary(
     sharedAmount,
     splitAmount,
     categoryTotals,
+    meCategoryTotals,
+    partnerCategoryTotals,
   };
+}
+
+function calculateCategoryTotal(expenses: Expense[], category: ExpenseCategory): CategoryTotal {
+  return {
+    category,
+    amount: expenses
+      .filter((expense) => expense.category === category)
+      .reduce((sum, expense) => sum + expense.amount, 0),
+  };
+}
+
+function hasAmount(item: CategoryTotal): boolean {
+  return item.amount > 0;
 }
