@@ -16,6 +16,7 @@ import { ExpenseSummary } from '@/src/components/ExpenseSummary';
 import { SettlementSummary } from '@/src/components/SettlementSummary';
 import { loadExpenses, saveExpenses } from '@/src/storage/expensesStorage';
 import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
+import { formatDateInput, formatYearMonth, shiftYearMonth } from '@/src/utils/date';
 import { calculateExpenseSummary } from '@/src/utils/expenseSummary';
 import { calculateSettlement } from '@/src/utils/settlement';
 
@@ -31,13 +32,24 @@ export default function HomeScreen() {
   const [isShared, setIsShared] = useState(true);
   const [isSplit, setIsSplit] = useState(true);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [selectedYearMonth, setSelectedYearMonth] = useState(formatYearMonth(new Date()));
 
-  const settlement = useMemo(() => calculateSettlement(expenses), [expenses]);
-  const sortedExpenses = useMemo(
-    () => [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)),
-    [expenses],
+  const visibleExpenses = useMemo(
+    () => expenses.filter((expense) => expense.date.startsWith(selectedYearMonth)),
+    [expenses, selectedYearMonth],
   );
-  const expenseSummary = useMemo(() => calculateExpenseSummary(expenses, categories), [expenses]);
+  const settlement = useMemo(() => calculateSettlement(visibleExpenses), [visibleExpenses]);
+  const sortedExpenses = useMemo(
+    () =>
+      [...visibleExpenses].sort(
+        (a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id),
+      ),
+    [visibleExpenses],
+  );
+  const expenseSummary = useMemo(
+    () => calculateExpenseSummary(visibleExpenses, categories),
+    [visibleExpenses],
+  );
   const hasSettlementTarget = settlement.targetTotal > 0;
 
   useEffect(() => {
@@ -159,7 +171,12 @@ export default function HomeScreen() {
   const settleCurrentExpenses = () => {
     setExpenses((currentExpenses) => {
       const nextExpenses = currentExpenses.map((expense) => {
-        if (expense.isShared && expense.isSplit && !expense.isSettled) {
+        if (
+          expense.date.startsWith(selectedYearMonth) &&
+          expense.isShared &&
+          expense.isSplit &&
+          !expense.isSettled
+        ) {
           return {
             ...expense,
             isSettled: true,
@@ -185,6 +202,16 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>ふたり家計簿</Text>
             <Text style={styles.subtitle}>使ったその場で登録して、折半額を自動計算します。</Text>
+          </View>
+
+          <View style={styles.monthSwitcher}>
+            <Text style={styles.monthButton} onPress={() => setSelectedYearMonth((current) => shiftYearMonth(current, -1))}>
+              前の月
+            </Text>
+            <Text style={styles.currentMonth}>{selectedYearMonth}</Text>
+            <Text style={styles.monthButton} onPress={() => setSelectedYearMonth((current) => shiftYearMonth(current, 1))}>
+              次の月
+            </Text>
           </View>
 
           <ExpenseSummary
@@ -233,14 +260,6 @@ export default function HomeScreen() {
   );
 }
 
-function formatDateInput(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -268,5 +287,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: 6,
+  },
+  monthSwitcher: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    padding: 12,
+  },
+  monthButton: {
+    color: '#2563EB',
+    fontSize: 14,
+    fontWeight: '700',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  currentMonth: {
+    color: '#111827',
+    fontSize: 18,
+    fontWeight: '700',
   },
 });
