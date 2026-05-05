@@ -1,50 +1,93 @@
-# Welcome to your Expo app 👋
+# ふたり家計簿
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+「ふたり家計簿」は、あとでまとめて計算しなくていい家計簿アプリです。
 
-## Get started
+カップル・夫婦で使うことを想定し、使ったその場で支出を記録して、あとでどちらがいくら払えばよいかを自動で計算します。
 
-1. Install dependencies
+## コンセプト
+
+- あとでまとめて計算しなくていい家計簿
+- カップル・夫婦で使う
+- その場で支出を記録し、精算を自動計算する
+
+## 現在の機能
+
+- 支出追加
+- 支払者選択
+- 共有ON/OFF
+- 折半ON/OFF
+- 精算計算
+- 支出一覧
+- AsyncStorage保存
+
+## 技術構成
+
+- React Native（Expo）
+- Expo Router
+- AsyncStorage
+
+## インストール手順
+
+1. 依存関係をインストールします。
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. 開発サーバーを起動します。
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. 表示された案内に従って、iOSシミュレーター、Androidエミュレーター、Expo Go、またはWebで起動します。
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## よく使うコマンド
 
 ```bash
-npm run reset-project
+npm run lint
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+コードのLintチェックを実行します。
 
-## Learn more
+```bash
+npx tsc --noEmit
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+TypeScriptの型チェックを実行します。
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx expo start
+```
 
-## Join the community
+Expoの開発サーバーを起動します。
 
-Join our community of developers creating universal apps.
+## 主なファイル構成
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```text
+app/
+  (tabs)/
+    index.tsx      # 家計簿のメイン画面
+    explore.tsx    # MVP構成メモ画面
+
+src/
+  constants/
+    storage.ts     # AsyncStorageのキー
+  types/
+    expense.ts     # 支出データの型
+  utils/
+    settlement.ts  # 精算計算ロジック
+```
+
+## データ保存
+
+支出データはAsyncStorageに保存しています。
+
+現在はFirebaseなどの外部バックエンドは使っていません。アプリ内のローカル保存だけで動くシンプルな構成です。
+
+## 開発方針
+
+- 初心者でも読みやすいコードにする
+- できるだけシンプルに実装する
+- 既存のExpo Router構成を維持する
+- 機能を小さく追加して確認しやすくする
