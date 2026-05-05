@@ -8,14 +8,15 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
-import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
+import { ExpenseForm } from '@/src/components/ExpenseForm';
+import { ExpenseList } from '@/src/components/ExpenseList';
+import { ExpenseSummary } from '@/src/components/ExpenseSummary';
 import { STORAGE_KEYS } from '@/src/constants/storage';
+import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
 import { calculateSettlement, formatYen } from '@/src/utils/settlement';
 
 const categories: ExpenseCategory[] = ['食費', '日用品', '交通費', 'その他'];
@@ -201,86 +202,33 @@ export default function HomeScreen() {
             <Text style={styles.subtitle}>使ったその場で登録して、折半額を自動計算します。</Text>
           </View>
 
-          <View style={styles.summaryCards}>
-            <SummaryCard label="合計支出" amount={expenseSummary.totalAmount} />
-            <SummaryCard label="共有支出" amount={expenseSummary.sharedAmount} />
-            <SummaryCard label="折半対象" amount={expenseSummary.splitAmount} />
-          </View>
+          <ExpenseSummary
+            totalAmount={expenseSummary.totalAmount}
+            sharedAmount={expenseSummary.sharedAmount}
+            splitAmount={expenseSummary.splitAmount}
+            categoryTotals={expenseSummary.categoryTotals}
+          />
 
-          {expenseSummary.categoryTotals.length > 0 && (
-            <View style={styles.categorySummary}>
-              <Text style={styles.sectionTitle}>カテゴリ別合計</Text>
-              {expenseSummary.categoryTotals.map((item) => (
-                <View key={item.category} style={styles.categoryTotalRow}>
-                  <Text style={styles.categoryTotalLabel}>{item.category}</Text>
-                  <Text style={styles.categoryTotalAmount}>{formatYen(item.amount)}円</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          <View style={styles.form}>
-            {editingExpenseId && <Text style={styles.editingText}>支出を編集中です</Text>}
-
-            <Text style={styles.label}>金額</Text>
-            <TextInput
-              value={amountText}
-              onChangeText={setAmountText}
-              keyboardType="number-pad"
-              placeholder="例: 3200"
-              style={styles.input}
-            />
-
-            <Text style={styles.label}>支払者</Text>
-            <View style={styles.segment}>
-              <SegmentButton active={payer === 'me'} label="自分" onPress={() => setPayer('me')} />
-              <SegmentButton
-                active={payer === 'partner'}
-                label="相手"
-                onPress={() => setPayer('partner')}
-              />
-            </View>
-
-            <Text style={styles.label}>カテゴリ</Text>
-            <View style={styles.categoryGrid}>
-              {categories.map((item) => (
-                <SegmentButton
-                  key={item}
-                  active={category === item}
-                  label={item}
-                  onPress={() => setCategory(item)}
-                />
-              ))}
-            </View>
-
-            <Text style={styles.label}>メモ</Text>
-            <TextInput
-              value={memo}
-              onChangeText={setMemo}
-              placeholder="例: ランチ"
-              style={[styles.input, styles.memoInput]}
-            />
-
-            <Text style={styles.label}>日付</Text>
-            <TextInput
-              value={date}
-              onChangeText={setDate}
-              placeholder="例: 2026-05-05"
-              style={styles.input}
-            />
-
-            <ToggleRow label="共有" value={isShared} onValueChange={setIsShared} />
-            <ToggleRow label="折半" value={isSplit} onValueChange={setIsSplit} />
-
-            <Pressable style={styles.addButton} onPress={submitExpense}>
-              <Text style={styles.addButtonText}>{editingExpenseId ? '保存' : '追加'}</Text>
-            </Pressable>
-            {editingExpenseId && (
-              <Pressable style={styles.cancelButton} onPress={resetForm}>
-                <Text style={styles.cancelButtonText}>編集キャンセル</Text>
-              </Pressable>
-            )}
-          </View>
+          <ExpenseForm
+            amountText={amountText}
+            payer={payer}
+            category={category}
+            memo={memo}
+            date={date}
+            isShared={isShared}
+            isSplit={isSplit}
+            isEditing={!!editingExpenseId}
+            categories={categories}
+            onAmountTextChange={setAmountText}
+            onPayerChange={setPayer}
+            onCategoryChange={setCategory}
+            onMemoChange={setMemo}
+            onDateChange={setDate}
+            onIsSharedChange={setIsShared}
+            onIsSplitChange={setIsSplit}
+            onSubmit={submitExpense}
+            onCancelEdit={resetForm}
+          />
 
           <View style={styles.summary}>
             <Text style={styles.sectionTitle}>精算</Text>
@@ -298,10 +246,7 @@ export default function HomeScreen() {
             </Text>
             <Pressable
               disabled={!hasSettlementTarget}
-              style={[
-                styles.settleButton,
-                !hasSettlementTarget && styles.settleButtonDisabled,
-              ]}
+              style={[styles.settleButton, !hasSettlementTarget && styles.settleButtonDisabled]}
               onPress={settleCurrentExpenses}>
               <Text
                 style={[
@@ -313,115 +258,15 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.expenseList}>
-            <Text style={styles.sectionTitle}>支出一覧</Text>
-            {sortedExpenses.length === 0 ? (
-              <Text style={styles.emptyText}>まだ支出がありません。</Text>
-            ) : (
-              sortedExpenses.map((item) => (
-                <ExpenseItem
-                  key={item.id}
-                  expense={item}
-                  onDelete={deleteExpense}
-                  onEdit={startEditExpense}
-                  onUnsettle={unsettleExpense}
-                />
-              ))
-            )}
-          </View>
+          <ExpenseList
+            expenses={sortedExpenses}
+            onDelete={deleteExpense}
+            onEdit={startEditExpense}
+            onUnsettle={unsettleExpense}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
-}
-
-function SummaryCard({ label, amount }: { label: string; amount: number }) {
-  return (
-    <View style={styles.summaryCard}>
-      <Text style={styles.summaryCardLabel}>{label}</Text>
-      <Text style={styles.summaryCardAmount}>{formatYen(amount)}円</Text>
-    </View>
-  );
-}
-
-function SegmentButton({
-  active,
-  label,
-  onPress,
-}: {
-  active: boolean;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable style={[styles.segmentButton, active && styles.segmentButtonActive]} onPress={onPress}>
-      <Text style={[styles.segmentButtonText, active && styles.segmentButtonTextActive]}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function ToggleRow({
-  label,
-  value,
-  onValueChange,
-}: {
-  label: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-}) {
-  return (
-    <View style={styles.toggleRow}>
-      <Text style={styles.toggleLabel}>{label}</Text>
-      <Switch value={value} onValueChange={onValueChange} />
-    </View>
-  );
-}
-
-function ExpenseItem({
-  expense,
-  onDelete,
-  onEdit,
-  onUnsettle,
-}: {
-  expense: Expense;
-  onDelete: (id: string) => void;
-  onEdit: (expense: Expense) => void;
-  onUnsettle: (id: string) => void;
-}) {
-  const isSplitTarget = expense.isShared && expense.isSplit && !expense.isSettled;
-
-  return (
-    <View style={[styles.expenseItem, expense.isSettled && styles.expenseItemSettled]}>
-      <View style={styles.expenseContent}>
-        <Text style={styles.expenseAmount}>{formatYen(expense.amount)}円</Text>
-        <Text style={styles.expenseCategory}>
-          {expense.category} / {expense.date}
-        </Text>
-        {!!expense.memo && <Text style={styles.expenseMemo}>{expense.memo}</Text>}
-        <Text style={styles.expenseMeta}>支払者: {expense.payer === 'me' ? '自分' : '相手'}</Text>
-      </View>
-      <View style={styles.expenseActions}>
-        <Text
-          style={[
-            styles.expenseBadge,
-            isSplitTarget && styles.expenseBadgeTarget,
-            expense.isSettled && styles.expenseBadgeSettled,
-          ]}>
-          {expense.isSettled ? '精算済み' : isSplitTarget ? '折半対象' : '対象外'}
-        </Text>
-        {expense.isSettled && (
-          <Pressable style={styles.unsettleButton} onPress={() => onUnsettle(expense.id)}>
-            <Text style={styles.unsettleButtonText}>未精算に戻す</Text>
-          </Pressable>
-        )}
-        <Pressable style={styles.editButton} onPress={() => onEdit(expense)}>
-          <Text style={styles.editButtonText}>編集</Text>
-        </Pressable>
-        <Pressable style={styles.deleteButton} onPress={() => onDelete(expense.id)}>
-          <Text style={styles.deleteButtonText}>削除</Text>
-        </Pressable>
-      </View>
-    </View>
   );
 }
 
@@ -494,149 +339,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 6,
   },
-  form: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    gap: 12,
-    marginTop: 16,
-    padding: 16,
-  },
-  editingText: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: 6,
-    color: '#92400E',
-    fontSize: 13,
-    fontWeight: '700',
-    overflow: 'hidden',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  summaryCards: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  summaryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    flex: 1,
-    minHeight: 78,
-    padding: 12,
-  },
-  summaryCardLabel: {
-    color: '#666666',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  summaryCardAmount: {
-    color: '#111827',
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 8,
-  },
-  categorySummary: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    marginTop: 12,
-    padding: 16,
-  },
-  categoryTotalRow: {
-    alignItems: 'center',
-    borderTopColor: '#EEEEEE',
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-  },
-  categoryTotalLabel: {
-    color: '#333333',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  categoryTotalAmount: {
-    color: '#111827',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  label: {
-    color: '#333333',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  input: {
-    backgroundColor: '#F4F4F4',
-    borderColor: '#DDDDDD',
-    borderRadius: 8,
-    borderWidth: 1,
-    fontSize: 22,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  memoInput: {
-    fontSize: 16,
-  },
-  segment: {
-    backgroundColor: '#EEEEEE',
-    borderRadius: 8,
-    flexDirection: 'row',
-    padding: 4,
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  segmentButton: {
-    alignItems: 'center',
-    borderRadius: 6,
-    flex: 1,
-    minWidth: 92,
-    paddingVertical: 10,
-  },
-  segmentButtonActive: {
-    backgroundColor: '#2563EB',
-  },
-  segmentButtonText: {
-    color: '#555555',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  segmentButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  toggleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    minHeight: 44,
-  },
-  toggleLabel: {
-    color: '#333333',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  addButton: {
-    alignItems: 'center',
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    marginTop: 4,
-    paddingVertical: 14,
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  cancelButton: {
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    paddingVertical: 12,
-  },
-  cancelButtonText: {
-    color: '#374151',
-    fontSize: 15,
-    fontWeight: '700',
-  },
   summary: {
     backgroundColor: '#EAF2FF',
     borderRadius: 8,
@@ -677,105 +379,5 @@ const styles = StyleSheet.create({
   },
   settleButtonTextDisabled: {
     color: '#6B7280',
-  },
-  expenseList: {
-    paddingTop: 16,
-  },
-  emptyText: {
-    color: '#777777',
-    fontSize: 14,
-  },
-  expenseItem: {
-    alignItems: 'flex-start',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    padding: 14,
-  },
-  expenseItemSettled: {
-    backgroundColor: '#F3F4F6',
-  },
-  expenseContent: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  expenseAmount: {
-    color: '#222222',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  expenseCategory: {
-    color: '#374151',
-    fontSize: 13,
-    fontWeight: '700',
-    marginTop: 5,
-  },
-  expenseMemo: {
-    color: '#555555',
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 4,
-  },
-  expenseMeta: {
-    color: '#666666',
-    fontSize: 13,
-    marginTop: 4,
-  },
-  expenseActions: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  expenseBadge: {
-    backgroundColor: '#EEF2F7',
-    borderRadius: 6,
-    color: '#374151',
-    fontSize: 12,
-    fontWeight: '700',
-    overflow: 'hidden',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  expenseBadgeTarget: {
-    backgroundColor: '#DBEAFE',
-    color: '#1D4ED8',
-  },
-  expenseBadgeSettled: {
-    backgroundColor: '#E5E7EB',
-    color: '#6B7280',
-  },
-  deleteButton: {
-    backgroundColor: '#FEE2E2',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  unsettleButton: {
-    backgroundColor: '#E0F2FE',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  unsettleButtonText: {
-    color: '#075985',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  editButton: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  editButtonText: {
-    color: '#92400E',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  deleteButtonText: {
-    color: '#991B1B',
-    fontSize: 12,
-    fontWeight: '700',
   },
 });
