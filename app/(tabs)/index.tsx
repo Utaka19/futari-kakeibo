@@ -31,6 +31,11 @@ export default function HomeScreen() {
   const [isSplit, setIsSplit] = useState(true);
 
   const settlement = useMemo(() => calculateSettlement(expenses), [expenses]);
+  const sortedExpenses = useMemo(
+    () => [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)),
+    [expenses],
+  );
+  const expenseSummary = useMemo(() => calculateExpenseSummary(expenses), [expenses]);
 
   useEffect(() => {
     const loadExpenses = async () => {
@@ -107,6 +112,24 @@ export default function HomeScreen() {
             <Text style={styles.subtitle}>使ったその場で登録して、折半額を自動計算します。</Text>
           </View>
 
+          <View style={styles.summaryCards}>
+            <SummaryCard label="合計支出" amount={expenseSummary.totalAmount} />
+            <SummaryCard label="共有支出" amount={expenseSummary.sharedAmount} />
+            <SummaryCard label="折半対象" amount={expenseSummary.splitAmount} />
+          </View>
+
+          {expenseSummary.categoryTotals.length > 0 && (
+            <View style={styles.categorySummary}>
+              <Text style={styles.sectionTitle}>カテゴリ別合計</Text>
+              {expenseSummary.categoryTotals.map((item) => (
+                <View key={item.category} style={styles.categoryTotalRow}>
+                  <Text style={styles.categoryTotalLabel}>{item.category}</Text>
+                  <Text style={styles.categoryTotalAmount}>{formatYen(item.amount)}円</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           <View style={styles.form}>
             <Text style={styles.label}>金額</Text>
             <TextInput
@@ -181,10 +204,10 @@ export default function HomeScreen() {
 
           <View style={styles.expenseList}>
             <Text style={styles.sectionTitle}>支出一覧</Text>
-            {expenses.length === 0 ? (
+            {sortedExpenses.length === 0 ? (
               <Text style={styles.emptyText}>まだ支出がありません。</Text>
             ) : (
-              expenses.map((item) => (
+              sortedExpenses.map((item) => (
                 <ExpenseItem key={item.id} expense={item} onDelete={deleteExpense} />
               ))
             )}
@@ -192,6 +215,15 @@ export default function HomeScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function SummaryCard({ label, amount }: { label: string; amount: number }) {
+  return (
+    <View style={styles.summaryCard}>
+      <Text style={styles.summaryCardLabel}>{label}</Text>
+      <Text style={styles.summaryCardAmount}>{formatYen(amount)}円</Text>
+    </View>
   );
 }
 
@@ -273,6 +305,31 @@ async function saveExpenses(expenses: Expense[]) {
   }
 }
 
+function calculateExpenseSummary(expenses: Expense[]) {
+  const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const sharedAmount = expenses
+    .filter((expense) => expense.isShared)
+    .reduce((sum, expense) => sum + expense.amount, 0);
+  const splitAmount = expenses
+    .filter((expense) => expense.isShared && expense.isSplit && !expense.isSettled)
+    .reduce((sum, expense) => sum + expense.amount, 0);
+  const categoryTotals = categories
+    .map((category) => ({
+      category,
+      amount: expenses
+        .filter((expense) => expense.category === category)
+        .reduce((sum, expense) => sum + expense.amount, 0),
+    }))
+    .filter((item) => item.amount > 0);
+
+  return {
+    totalAmount,
+    sharedAmount,
+    splitAmount,
+    categoryTotals,
+  };
+}
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -305,7 +362,54 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     gap: 12,
+    marginTop: 16,
     padding: 16,
+  },
+  summaryCards: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  summaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    flex: 1,
+    minHeight: 78,
+    padding: 12,
+  },
+  summaryCardLabel: {
+    color: '#666666',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  summaryCardAmount: {
+    color: '#111827',
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  categorySummary: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    marginTop: 12,
+    padding: 16,
+  },
+  categoryTotalRow: {
+    alignItems: 'center',
+    borderTopColor: '#EEEEEE',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  categoryTotalLabel: {
+    color: '#333333',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  categoryTotalAmount: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '700',
   },
   label: {
     color: '#333333',
