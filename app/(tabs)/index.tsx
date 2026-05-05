@@ -29,6 +29,7 @@ export default function HomeScreen() {
   const [date, setDate] = useState(formatDateInput(new Date()));
   const [isShared, setIsShared] = useState(true);
   const [isSplit, setIsSplit] = useState(true);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
   const settlement = useMemo(() => calculateSettlement(expenses), [expenses]);
   const sortedExpenses = useMemo(
@@ -61,11 +62,48 @@ export default function HomeScreen() {
     loadExpenses();
   }, []);
 
-  const addExpense = () => {
+  const resetForm = () => {
+    setAmountText('');
+    setPayer('me');
+    setCategory('食費');
+    setMemo('');
+    setDate(formatDateInput(new Date()));
+    setIsShared(true);
+    setIsSplit(true);
+    setEditingExpenseId(null);
+  };
+
+  const submitExpense = () => {
     const amount = Number(amountText);
 
     if (!amountText || Number.isNaN(amount) || amount <= 0) {
       Alert.alert('入力エラー', '金額を1円以上で入力してください。');
+      return;
+    }
+
+    if (editingExpenseId) {
+      setExpenses((currentExpenses) => {
+        const nextExpenses = currentExpenses.map((expense) => {
+          if (expense.id !== editingExpenseId) {
+            return expense;
+          }
+
+          return {
+            ...expense,
+            amount,
+            payer,
+            category,
+            memo: memo.trim(),
+            date,
+            isShared,
+            isSplit,
+          };
+        });
+        saveExpenses(nextExpenses);
+
+        return nextExpenses;
+      });
+      resetForm();
       return;
     }
 
@@ -87,13 +125,45 @@ export default function HomeScreen() {
 
       return nextExpenses;
     });
-    setAmountText('');
-    setMemo('');
+    resetForm();
+  };
+
+  const startEditExpense = (expense: Expense) => {
+    setEditingExpenseId(expense.id);
+    setAmountText(String(expense.amount));
+    setPayer(expense.payer);
+    setCategory(expense.category);
+    setMemo(expense.memo);
+    setDate(expense.date);
+    setIsShared(expense.isShared);
+    setIsSplit(expense.isSplit);
   };
 
   const deleteExpense = (id: string) => {
     setExpenses((currentExpenses) => {
       const nextExpenses = currentExpenses.filter((expense) => expense.id !== id);
+      saveExpenses(nextExpenses);
+
+      return nextExpenses;
+    });
+
+    if (editingExpenseId === id) {
+      resetForm();
+    }
+  };
+
+  const unsettleExpense = (id: string) => {
+    setExpenses((currentExpenses) => {
+      const nextExpenses = currentExpenses.map((expense) => {
+        if (expense.id === id) {
+          return {
+            ...expense,
+            isSettled: false,
+          };
+        }
+
+        return expense;
+      });
       saveExpenses(nextExpenses);
 
       return nextExpenses;
@@ -150,6 +220,8 @@ export default function HomeScreen() {
           )}
 
           <View style={styles.form}>
+            {editingExpenseId && <Text style={styles.editingText}>支出を編集中です</Text>}
+
             <Text style={styles.label}>金額</Text>
             <TextInput
               value={amountText}
@@ -200,9 +272,14 @@ export default function HomeScreen() {
             <ToggleRow label="共有" value={isShared} onValueChange={setIsShared} />
             <ToggleRow label="折半" value={isSplit} onValueChange={setIsSplit} />
 
-            <Pressable style={styles.addButton} onPress={addExpense}>
-              <Text style={styles.addButtonText}>追加</Text>
+            <Pressable style={styles.addButton} onPress={submitExpense}>
+              <Text style={styles.addButtonText}>{editingExpenseId ? '保存' : '追加'}</Text>
             </Pressable>
+            {editingExpenseId && (
+              <Pressable style={styles.cancelButton} onPress={resetForm}>
+                <Text style={styles.cancelButtonText}>編集キャンセル</Text>
+              </Pressable>
+            )}
           </View>
 
           <View style={styles.summary}>
@@ -242,7 +319,13 @@ export default function HomeScreen() {
               <Text style={styles.emptyText}>まだ支出がありません。</Text>
             ) : (
               sortedExpenses.map((item) => (
-                <ExpenseItem key={item.id} expense={item} onDelete={deleteExpense} />
+                <ExpenseItem
+                  key={item.id}
+                  expense={item}
+                  onDelete={deleteExpense}
+                  onEdit={startEditExpense}
+                  onUnsettle={unsettleExpense}
+                />
               ))
             )}
           </View>
@@ -297,9 +380,13 @@ function ToggleRow({
 function ExpenseItem({
   expense,
   onDelete,
+  onEdit,
+  onUnsettle,
 }: {
   expense: Expense;
   onDelete: (id: string) => void;
+  onEdit: (expense: Expense) => void;
+  onUnsettle: (id: string) => void;
 }) {
   const isSplitTarget = expense.isShared && expense.isSplit && !expense.isSettled;
 
@@ -322,6 +409,14 @@ function ExpenseItem({
           ]}>
           {expense.isSettled ? '精算済み' : isSplitTarget ? '折半対象' : '対象外'}
         </Text>
+        {expense.isSettled && (
+          <Pressable style={styles.unsettleButton} onPress={() => onUnsettle(expense.id)}>
+            <Text style={styles.unsettleButtonText}>未精算に戻す</Text>
+          </Pressable>
+        )}
+        <Pressable style={styles.editButton} onPress={() => onEdit(expense)}>
+          <Text style={styles.editButtonText}>編集</Text>
+        </Pressable>
         <Pressable style={styles.deleteButton} onPress={() => onDelete(expense.id)}>
           <Text style={styles.deleteButtonText}>削除</Text>
         </Pressable>
@@ -405,6 +500,16 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 16,
     padding: 16,
+  },
+  editingText: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 6,
+    color: '#92400E',
+    fontSize: 13,
+    fontWeight: '700',
+    overflow: 'hidden',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   summaryCards: {
     flexDirection: 'row',
@@ -521,6 +626,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  cancelButton: {
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+  },
+  cancelButtonText: {
+    color: '#374151',
+    fontSize: 15,
+    fontWeight: '700',
+  },
   summary: {
     backgroundColor: '#EAF2FF',
     borderRadius: 8,
@@ -634,6 +750,28 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
+  },
+  unsettleButton: {
+    backgroundColor: '#E0F2FE',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  unsettleButtonText: {
+    color: '#075985',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  editButton: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  editButtonText: {
+    color: '#92400E',
+    fontSize: 12,
+    fontWeight: '700',
   },
   deleteButtonText: {
     color: '#991B1B',
