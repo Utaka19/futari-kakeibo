@@ -5,6 +5,8 @@ import { formatYen } from '@/src/utils/settlement';
 
 export function ExpenseSummary({
   totalAmount,
+  mePaidAmount,
+  partnerPaidAmount,
   sharedAmount,
   splitAmount,
   categoryTotals,
@@ -13,6 +15,8 @@ export function ExpenseSummary({
     <>
       <View style={styles.summaryCards}>
         <SummaryCard label="合計支出" amount={totalAmount} />
+        <SummaryCard label="自分の支払合計" amount={mePaidAmount} />
+        <SummaryCard label="相手の支払合計" amount={partnerPaidAmount} />
         <SummaryCard label="共有支出" amount={sharedAmount} />
         <SummaryCard label="折半対象" amount={splitAmount} />
       </View>
@@ -44,12 +48,14 @@ function SummaryCard({ label, amount }: { label: string; amount: number }) {
 const styles = StyleSheet.create({
   summaryCards: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   summaryCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '30%',
     minHeight: 78,
     padding: 12,
   },

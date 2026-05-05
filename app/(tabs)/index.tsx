@@ -216,6 +216,8 @@ export default function HomeScreen() {
 
           <ExpenseSummary
             totalAmount={expenseSummary.totalAmount}
+            mePaidAmount={expenseSummary.mePaidAmount}
+            partnerPaidAmount={expenseSummary.partnerPaidAmount}
             sharedAmount={expenseSummary.sharedAmount}
             splitAmount={expenseSummary.splitAmount}
             categoryTotals={expenseSummary.categoryTotals}
