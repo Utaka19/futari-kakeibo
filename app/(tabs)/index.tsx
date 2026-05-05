@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import {
   Alert,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -64,89 +64,97 @@ export default function HomeScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>ふたり家計簿</Text>
-          <Text style={styles.subtitle}>使ったその場で登録して、折半額を自動計算します。</Text>
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled">
+          <View style={styles.header}>
+            <Text style={styles.title}>ふたり家計簿</Text>
+            <Text style={styles.subtitle}>使ったその場で登録して、折半額を自動計算します。</Text>
+          </View>
 
-        <View style={styles.form}>
-          <Text style={styles.label}>金額</Text>
-          <TextInput
-            value={amountText}
-            onChangeText={setAmountText}
-            keyboardType="number-pad"
-            placeholder="例: 3200"
-            style={styles.input}
-          />
-
-          <Text style={styles.label}>支払者</Text>
-          <View style={styles.segment}>
-            <SegmentButton active={payer === 'me'} label="自分" onPress={() => setPayer('me')} />
-            <SegmentButton
-              active={payer === 'partner'}
-              label="相手"
-              onPress={() => setPayer('partner')}
+          <View style={styles.form}>
+            <Text style={styles.label}>金額</Text>
+            <TextInput
+              value={amountText}
+              onChangeText={setAmountText}
+              keyboardType="number-pad"
+              placeholder="例: 3200"
+              style={styles.input}
             />
-          </View>
 
-          <Text style={styles.label}>カテゴリ</Text>
-          <View style={styles.categoryGrid}>
-            {categories.map((item) => (
+            <Text style={styles.label}>支払者</Text>
+            <View style={styles.segment}>
+              <SegmentButton active={payer === 'me'} label="自分" onPress={() => setPayer('me')} />
               <SegmentButton
-                key={item}
-                active={category === item}
-                label={item}
-                onPress={() => setCategory(item)}
+                active={payer === 'partner'}
+                label="相手"
+                onPress={() => setPayer('partner')}
               />
-            ))}
+            </View>
+
+            <Text style={styles.label}>カテゴリ</Text>
+            <View style={styles.categoryGrid}>
+              {categories.map((item) => (
+                <SegmentButton
+                  key={item}
+                  active={category === item}
+                  label={item}
+                  onPress={() => setCategory(item)}
+                />
+              ))}
+            </View>
+
+            <Text style={styles.label}>メモ</Text>
+            <TextInput
+              value={memo}
+              onChangeText={setMemo}
+              placeholder="例: ランチ"
+              style={[styles.input, styles.memoInput]}
+            />
+
+            <Text style={styles.label}>日付</Text>
+            <TextInput
+              value={date}
+              onChangeText={setDate}
+              placeholder="例: 2026-05-05"
+              style={styles.input}
+            />
+
+            <ToggleRow label="共有" value={isShared} onValueChange={setIsShared} />
+            <ToggleRow label="折半" value={isSplit} onValueChange={setIsSplit} />
+
+            <Pressable style={styles.addButton} onPress={addExpense}>
+              <Text style={styles.addButtonText}>追加</Text>
+            </Pressable>
           </View>
 
-          <Text style={styles.label}>メモ</Text>
-          <TextInput
-            value={memo}
-            onChangeText={setMemo}
-            placeholder="例: ランチ"
-            style={[styles.input, styles.memoInput]}
-          />
+          <View style={styles.summary}>
+            <Text style={styles.sectionTitle}>精算</Text>
+            <Text style={styles.summaryText}>対象合計: {formatYen(settlement.targetTotal)}円</Text>
+            <Text style={styles.summaryText}>自分の支払い: {formatYen(settlement.mePaid)}円</Text>
+            <Text style={styles.summaryText}>
+              相手の支払い: {formatYen(settlement.partnerPaid)}円
+            </Text>
+            <Text style={styles.resultText}>
+              {settlement.payer === null
+                ? '精算は不要です'
+                : `${settlement.payer === 'me' ? '自分' : '相手'}が${formatYen(
+                    settlement.amount,
+                  )}円払う`}
+            </Text>
+          </View>
 
-          <Text style={styles.label}>日付</Text>
-          <TextInput
-            value={date}
-            onChangeText={setDate}
-            placeholder="例: 2026-05-05"
-            style={styles.input}
-          />
-
-          <ToggleRow label="共有" value={isShared} onValueChange={setIsShared} />
-          <ToggleRow label="折半" value={isSplit} onValueChange={setIsSplit} />
-
-          <Pressable style={styles.addButton} onPress={addExpense}>
-            <Text style={styles.addButtonText}>追加</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.summary}>
-          <Text style={styles.sectionTitle}>精算</Text>
-          <Text style={styles.summaryText}>対象合計: {formatYen(settlement.targetTotal)}円</Text>
-          <Text style={styles.summaryText}>自分の支払い: {formatYen(settlement.mePaid)}円</Text>
-          <Text style={styles.summaryText}>相手の支払い: {formatYen(settlement.partnerPaid)}円</Text>
-          <Text style={styles.resultText}>
-            {settlement.payer === null
-              ? '精算は不要です'
-              : `${settlement.payer === 'me' ? '自分' : '相手'}が${formatYen(
-                  settlement.amount,
-                )}円払う`}
-          </Text>
-        </View>
-
-        <FlatList
-          data={expenses}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={<Text style={styles.sectionTitle}>支出一覧</Text>}
-          ListEmptyComponent={<Text style={styles.emptyText}>まだ支出がありません。</Text>}
-          renderItem={({ item }) => <ExpenseItem expense={item} onDelete={deleteExpense} />}
-          contentContainerStyle={styles.listContent}
-        />
+          <View style={styles.expenseList}>
+            <Text style={styles.sectionTitle}>支出一覧</Text>
+            {expenses.length === 0 ? (
+              <Text style={styles.emptyText}>まだ支出がありません。</Text>
+            ) : (
+              expenses.map((item) => (
+                <ExpenseItem key={item.id} expense={item} onDelete={deleteExpense} />
+              ))
+            )}
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -229,6 +237,10 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 32,
     paddingHorizontal: 20,
   },
   header: {
@@ -344,8 +356,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 10,
   },
-  listContent: {
-    paddingBottom: 24,
+  expenseList: {
     paddingTop: 16,
   },
   emptyText: {
