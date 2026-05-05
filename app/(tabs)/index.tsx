@@ -36,6 +36,7 @@ export default function HomeScreen() {
     [expenses],
   );
   const expenseSummary = useMemo(() => calculateExpenseSummary(expenses), [expenses]);
+  const hasSettlementTarget = settlement.targetTotal > 0;
 
   useEffect(() => {
     const loadExpenses = async () => {
@@ -93,6 +94,24 @@ export default function HomeScreen() {
   const deleteExpense = (id: string) => {
     setExpenses((currentExpenses) => {
       const nextExpenses = currentExpenses.filter((expense) => expense.id !== id);
+      saveExpenses(nextExpenses);
+
+      return nextExpenses;
+    });
+  };
+
+  const settleCurrentExpenses = () => {
+    setExpenses((currentExpenses) => {
+      const nextExpenses = currentExpenses.map((expense) => {
+        if (expense.isShared && expense.isSplit && !expense.isSettled) {
+          return {
+            ...expense,
+            isSettled: true,
+          };
+        }
+
+        return expense;
+      });
       saveExpenses(nextExpenses);
 
       return nextExpenses;
@@ -200,6 +219,21 @@ export default function HomeScreen() {
                     settlement.amount,
                   )}円払う`}
             </Text>
+            <Pressable
+              disabled={!hasSettlementTarget}
+              style={[
+                styles.settleButton,
+                !hasSettlementTarget && styles.settleButtonDisabled,
+              ]}
+              onPress={settleCurrentExpenses}>
+              <Text
+                style={[
+                  styles.settleButtonText,
+                  !hasSettlementTarget && styles.settleButtonTextDisabled,
+                ]}>
+                精算済みにする
+              </Text>
+            </Pressable>
           </View>
 
           <View style={styles.expenseList}>
@@ -267,8 +301,10 @@ function ExpenseItem({
   expense: Expense;
   onDelete: (id: string) => void;
 }) {
+  const isSplitTarget = expense.isShared && expense.isSplit && !expense.isSettled;
+
   return (
-    <View style={styles.expenseItem}>
+    <View style={[styles.expenseItem, expense.isSettled && styles.expenseItemSettled]}>
       <View style={styles.expenseContent}>
         <Text style={styles.expenseAmount}>{formatYen(expense.amount)}円</Text>
         <Text style={styles.expenseCategory}>
@@ -278,8 +314,13 @@ function ExpenseItem({
         <Text style={styles.expenseMeta}>支払者: {expense.payer === 'me' ? '自分' : '相手'}</Text>
       </View>
       <View style={styles.expenseActions}>
-        <Text style={styles.expenseBadge}>
-          {expense.isShared && expense.isSplit && !expense.isSettled ? '折半対象' : '対象外'}
+        <Text
+          style={[
+            styles.expenseBadge,
+            isSplitTarget && styles.expenseBadgeTarget,
+            expense.isSettled && styles.expenseBadgeSettled,
+          ]}>
+          {expense.isSettled ? '精算済み' : isSplitTarget ? '折半対象' : '対象外'}
         </Text>
         <Pressable style={styles.deleteButton} onPress={() => onDelete(expense.id)}>
           <Text style={styles.deleteButtonText}>削除</Text>
@@ -503,6 +544,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 10,
   },
+  settleButton: {
+    alignItems: 'center',
+    backgroundColor: '#2563EB',
+    borderRadius: 8,
+    marginTop: 14,
+    paddingVertical: 12,
+  },
+  settleButtonDisabled: {
+    backgroundColor: '#D1D5DB',
+  },
+  settleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  settleButtonTextDisabled: {
+    color: '#6B7280',
+  },
   expenseList: {
     paddingTop: 16,
   },
@@ -518,6 +577,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
     padding: 14,
+  },
+  expenseItemSettled: {
+    backgroundColor: '#F3F4F6',
   },
   expenseContent: {
     flex: 1,
@@ -558,6 +620,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 8,
     paddingVertical: 6,
+  },
+  expenseBadgeTarget: {
+    backgroundColor: '#DBEAFE',
+    color: '#1D4ED8',
+  },
+  expenseBadgeSettled: {
+    backgroundColor: '#E5E7EB',
+    color: '#6B7280',
   },
   deleteButton: {
     backgroundColor: '#FEE2E2',
