@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,6 +15,7 @@ import {
 } from 'react-native';
 
 import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
+import { STORAGE_KEYS } from '@/src/constants/storage';
 import { calculateSettlement, formatYen } from '@/src/utils/settlement';
 
 const categories: ExpenseCategory[] = ['食費', '日用品', '交通費', 'その他'];
@@ -29,6 +31,29 @@ export default function HomeScreen() {
   const [isSplit, setIsSplit] = useState(true);
 
   const settlement = useMemo(() => calculateSettlement(expenses), [expenses]);
+
+  useEffect(() => {
+    const loadExpenses = async () => {
+      try {
+        const storedExpenses = await AsyncStorage.getItem(STORAGE_KEYS.expenses);
+
+        if (!storedExpenses) {
+          return;
+        }
+
+        const parsedExpenses = JSON.parse(storedExpenses);
+
+        if (Array.isArray(parsedExpenses)) {
+          setExpenses(parsedExpenses);
+        }
+      } catch (error) {
+        console.warn('支出データの読み込みに失敗しました。', error);
+        setExpenses([]);
+      }
+    };
+
+    loadExpenses();
+  }, []);
 
   const addExpense = () => {
     const amount = Number(amountText);
@@ -50,13 +75,23 @@ export default function HomeScreen() {
       isSettled: false,
     };
 
-    setExpenses((currentExpenses) => [newExpense, ...currentExpenses]);
+    setExpenses((currentExpenses) => {
+      const nextExpenses = [newExpense, ...currentExpenses];
+      saveExpenses(nextExpenses);
+
+      return nextExpenses;
+    });
     setAmountText('');
     setMemo('');
   };
 
   const deleteExpense = (id: string) => {
-    setExpenses((currentExpenses) => currentExpenses.filter((expense) => expense.id !== id));
+    setExpenses((currentExpenses) => {
+      const nextExpenses = currentExpenses.filter((expense) => expense.id !== id);
+      saveExpenses(nextExpenses);
+
+      return nextExpenses;
+    });
   };
 
   return (
@@ -228,6 +263,14 @@ function formatDateInput(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+}
+
+async function saveExpenses(expenses: Expense[]) {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.expenses, JSON.stringify(expenses));
+  } catch (error) {
+    console.warn('支出データの保存に失敗しました。', error);
+  }
 }
 
 const styles = StyleSheet.create({
