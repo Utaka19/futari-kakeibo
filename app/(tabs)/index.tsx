@@ -1,10 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -15,9 +13,11 @@ import {
 import { ExpenseForm } from '@/src/components/ExpenseForm';
 import { ExpenseList } from '@/src/components/ExpenseList';
 import { ExpenseSummary } from '@/src/components/ExpenseSummary';
-import { STORAGE_KEYS } from '@/src/constants/storage';
+import { SettlementSummary } from '@/src/components/SettlementSummary';
+import { loadExpenses, saveExpenses } from '@/src/storage/expensesStorage';
 import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
-import { calculateSettlement, formatYen } from '@/src/utils/settlement';
+import { calculateExpenseSummary } from '@/src/utils/expenseSummary';
+import { calculateSettlement } from '@/src/utils/settlement';
 
 const categories: ExpenseCategory[] = ['食費', '日用品', '交通費', 'その他'];
 
@@ -37,30 +37,15 @@ export default function HomeScreen() {
     () => [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)),
     [expenses],
   );
-  const expenseSummary = useMemo(() => calculateExpenseSummary(expenses), [expenses]);
+  const expenseSummary = useMemo(() => calculateExpenseSummary(expenses, categories), [expenses]);
   const hasSettlementTarget = settlement.targetTotal > 0;
 
   useEffect(() => {
-    const loadExpenses = async () => {
-      try {
-        const storedExpenses = await AsyncStorage.getItem(STORAGE_KEYS.expenses);
-
-        if (!storedExpenses) {
-          return;
-        }
-
-        const parsedExpenses = JSON.parse(storedExpenses);
-
-        if (Array.isArray(parsedExpenses)) {
-          setExpenses(parsedExpenses);
-        }
-      } catch (error) {
-        console.warn('支出データの読み込みに失敗しました。', error);
-        setExpenses([]);
-      }
+    const restoreExpenses = async () => {
+      setExpenses(await loadExpenses());
     };
 
-    loadExpenses();
+    restoreExpenses();
   }, []);
 
   const resetForm = () => {
@@ -230,33 +215,11 @@ export default function HomeScreen() {
             onCancelEdit={resetForm}
           />
 
-          <View style={styles.summary}>
-            <Text style={styles.sectionTitle}>精算</Text>
-            <Text style={styles.summaryText}>対象合計: {formatYen(settlement.targetTotal)}円</Text>
-            <Text style={styles.summaryText}>自分の支払い: {formatYen(settlement.mePaid)}円</Text>
-            <Text style={styles.summaryText}>
-              相手の支払い: {formatYen(settlement.partnerPaid)}円
-            </Text>
-            <Text style={styles.resultText}>
-              {settlement.payer === null
-                ? '精算は不要です'
-                : `${settlement.payer === 'me' ? '自分' : '相手'}が${formatYen(
-                    settlement.amount,
-                  )}円払う`}
-            </Text>
-            <Pressable
-              disabled={!hasSettlementTarget}
-              style={[styles.settleButton, !hasSettlementTarget && styles.settleButtonDisabled]}
-              onPress={settleCurrentExpenses}>
-              <Text
-                style={[
-                  styles.settleButtonText,
-                  !hasSettlementTarget && styles.settleButtonTextDisabled,
-                ]}>
-                精算済みにする
-              </Text>
-            </Pressable>
-          </View>
+          <SettlementSummary
+            settlement={settlement}
+            canSettle={hasSettlementTarget}
+            onSettle={settleCurrentExpenses}
+          />
 
           <ExpenseList
             expenses={sortedExpenses}
@@ -276,39 +239,6 @@ function formatDateInput(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
-}
-
-async function saveExpenses(expenses: Expense[]) {
-  try {
-    await AsyncStorage.setItem(STORAGE_KEYS.expenses, JSON.stringify(expenses));
-  } catch (error) {
-    console.warn('支出データの保存に失敗しました。', error);
-  }
-}
-
-function calculateExpenseSummary(expenses: Expense[]) {
-  const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const sharedAmount = expenses
-    .filter((expense) => expense.isShared)
-    .reduce((sum, expense) => sum + expense.amount, 0);
-  const splitAmount = expenses
-    .filter((expense) => expense.isShared && expense.isSplit && !expense.isSettled)
-    .reduce((sum, expense) => sum + expense.amount, 0);
-  const categoryTotals = categories
-    .map((category) => ({
-      category,
-      amount: expenses
-        .filter((expense) => expense.category === category)
-        .reduce((sum, expense) => sum + expense.amount, 0),
-    }))
-    .filter((item) => item.amount > 0);
-
-  return {
-    totalAmount,
-    sharedAmount,
-    splitAmount,
-    categoryTotals,
-  };
 }
 
 const styles = StyleSheet.create({
@@ -338,46 +268,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: 6,
-  },
-  summary: {
-    backgroundColor: '#EAF2FF',
-    borderRadius: 8,
-    marginTop: 16,
-    padding: 16,
-  },
-  sectionTitle: {
-    color: '#222222',
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  summaryText: {
-    color: '#333333',
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  resultText: {
-    color: '#0F3D7A',
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 10,
-  },
-  settleButton: {
-    alignItems: 'center',
-    backgroundColor: '#2563EB',
-    borderRadius: 8,
-    marginTop: 14,
-    paddingVertical: 12,
-  },
-  settleButtonDisabled: {
-    backgroundColor: '#D1D5DB',
-  },
-  settleButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  settleButtonTextDisabled: {
-    color: '#6B7280',
   },
 });

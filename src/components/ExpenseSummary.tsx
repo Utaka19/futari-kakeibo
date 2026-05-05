@@ -1,26 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import type { ExpenseCategory } from '@/src/types/expense';
+import type { ExpenseSummaryData } from '@/src/utils/expenseSummary';
 import { formatYen } from '@/src/utils/settlement';
-
-export type CategoryTotal = {
-  category: ExpenseCategory;
-  amount: number;
-};
-
-type ExpenseSummaryProps = {
-  totalAmount: number;
-  sharedAmount: number;
-  splitAmount: number;
-  categoryTotals: CategoryTotal[];
-};
 
 export function ExpenseSummary({
   totalAmount,
   sharedAmount,
   splitAmount,
   categoryTotals,
-}: ExpenseSummaryProps) {
+}: ExpenseSummaryData) {
   return (
     <>
       <View style={styles.summaryCards}>
