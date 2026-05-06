@@ -87,11 +87,24 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
       <View style={styles.keyGrid}>
         {keyRows.map((row) => (
           <View key={row.join('-')} style={styles.keyRow}>
-            {row.map((key) => (
-              <Pressable key={key} style={styles.keyButton} onPress={() => pressKey(key)}>
-                <Text style={styles.keyButtonText}>{key}</Text>
-              </Pressable>
-            ))}
+            {row.map((key) => {
+              const isDisabledOperator = isPlusKey(key) && !canAppendPlus(expression);
+
+              return (
+                <Pressable
+                  key={key}
+                  style={[styles.keyButton, isDisabledOperator && styles.keyButtonDisabled]}
+                  onPress={() => pressKey(key)}>
+                  <Text
+                    style={[
+                      styles.keyButtonText,
+                      isDisabledOperator && styles.keyButtonTextDisabled,
+                    ]}>
+                    {key}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         ))}
       </View>
@@ -109,6 +122,14 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
 
 function isBackspaceKey(key: CalculatorKey): boolean {
   return key === '⌫';
+}
+
+function isPlusKey(key: CalculatorKey): boolean {
+  return key === '+';
+}
+
+function canAppendPlus(expression: string): boolean {
+  return !!expression && !expression.endsWith('+');
 }
 
 const styles = StyleSheet.create({
@@ -159,10 +180,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
   },
+  keyButtonDisabled: {
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
+  },
   keyButtonText: {
     color: '#111827',
     fontSize: 16,
     fontWeight: '700',
+  },
+  keyButtonTextDisabled: {
+    color: '#9CA3AF',
   },
   clearButton: {
     backgroundColor: '#F3F4F6',
