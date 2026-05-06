@@ -16,6 +16,7 @@ import {
   getBillingPeriod,
   isDateInBillingPeriod,
   isValidDateInput,
+  normalizeDateInput,
   shiftYearMonth,
 } from '@/src/utils/date';
 import { calculateExpenseSummary } from '@/src/utils/expenseSummary';
@@ -105,10 +106,14 @@ export default function HomeScreen() {
       return;
     }
 
-    if (!isValidDateInput(date)) {
+    const normalizedDate = normalizeDateInput(date);
+
+    if (!normalizedDate || !isValidDateInput(normalizedDate)) {
       setDateErrorMessage('日付はYYYY-MM-DD形式の実在する日付で入力してください。');
       return;
     }
+
+    setDate(normalizedDate);
 
     if (editingExpenseId) {
       setExpenses((currentExpenses) => {
@@ -123,7 +128,7 @@ export default function HomeScreen() {
             payer,
             category,
             memo: memo.trim(),
-            date,
+            date: normalizedDate,
             isShared,
             isSplit,
           };
@@ -142,7 +147,7 @@ export default function HomeScreen() {
       payer,
       category,
       memo: memo.trim(),
-      date,
+      date: normalizedDate,
       isShared,
       isSplit,
       isSettled: false,

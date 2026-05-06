@@ -72,6 +72,7 @@ export function ExpenseForm({
         value={amountText}
         onChangeText={onAmountTextChange}
         keyboardType="number-pad"
+        maxLength={8}
         placeholder="例: 3200"
         style={[styles.input, amountErrorMessage && styles.inputError]}
       />
@@ -112,6 +113,7 @@ export function ExpenseForm({
       <TextInput
         value={date}
         onChangeText={onDateChange}
+        maxLength={10}
         placeholder="例: 2026-05-05"
         style={[styles.input, dateErrorMessage && styles.inputError]}
       />
