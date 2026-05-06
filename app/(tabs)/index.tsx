@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { BillingStartDaySelector } from '@/src/components/BillingStartDaySelector';
 import { ExpenseForm } from '@/src/components/ExpenseForm';
 import { ExpenseList } from '@/src/components/ExpenseList';
 import { ExpenseSummary } from '@/src/components/ExpenseSummary';
@@ -272,15 +273,11 @@ export default function HomeScreen() {
           />
 
           <View style={styles.billingCard}>
-            <View style={styles.billingControls}>
-              <Text style={styles.billingButton} onPress={decreaseBillingStartDay}>
-                -1日
-              </Text>
-              <Text style={styles.billingTitle}>開始日: {billingStartDay}日</Text>
-              <Text style={styles.billingButton} onPress={increaseBillingStartDay}>
-                +1日
-              </Text>
-            </View>
+            <BillingStartDaySelector
+              billingStartDay={billingStartDay}
+              onDecrease={decreaseBillingStartDay}
+              onIncrease={increaseBillingStartDay}
+            />
             <Text style={styles.billingPeriod}>
               対象期間: {billingPeriod.startDate}〜{billingPeriod.endDate}
             </Text>
@@ -371,23 +368,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     padding: 12,
-  },
-  billingControls: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  billingButton: {
-    color: '#2563EB',
-    fontSize: 14,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  billingTitle: {
-    color: '#111827',
-    fontSize: 16,
-    fontWeight: '700',
   },
   billingPeriod: {
     color: '#666666',
