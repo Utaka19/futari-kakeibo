@@ -15,6 +15,10 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
 
   const appendKey = (key: string) => {
     setExpression((current) => {
+      if (key === '+' && (!current || current.endsWith('+'))) {
+        return current;
+      }
+
       if (key !== '+' && getCurrentValueLength(current) >= maxAmountDigits) {
         setErrorMessage('各金額は8桁以内で入力してください。');
         return current;
