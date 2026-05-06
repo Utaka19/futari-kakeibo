@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
+import { AmountCalculator } from '@/src/components/AmountCalculator';
 import type { ExpenseCategory, Payer } from '@/src/types/expense';
 
 type ExpenseFormProps = {
@@ -47,11 +49,25 @@ export function ExpenseForm({
   onSubmit,
   onCancelEdit,
 }: ExpenseFormProps) {
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
+  const applyCalculatedAmount = (amount: string) => {
+    onAmountTextChange(amount);
+    setIsCalculatorOpen(false);
+  };
+
   return (
     <View style={styles.form}>
       {isEditing && <Text style={styles.editingText}>支出を編集中です</Text>}
 
-      <Text style={styles.label}>金額</Text>
+      <View style={styles.labelRow}>
+        <Text style={styles.label}>金額</Text>
+        <Text
+          style={styles.calculatorToggle}
+          onPress={() => setIsCalculatorOpen((current) => !current)}>
+          計算
+        </Text>
+      </View>
       <TextInput
         value={amountText}
         onChangeText={onAmountTextChange}
@@ -60,6 +76,7 @@ export function ExpenseForm({
         style={[styles.input, amountErrorMessage && styles.inputError]}
       />
       {!!amountErrorMessage && <Text style={styles.errorText}>{amountErrorMessage}</Text>}
+      {isCalculatorOpen && <AmountCalculator onApply={applyCalculatedAmount} />}
 
       <Text style={styles.label}>支払者</Text>
       <View style={styles.segment}>
@@ -170,6 +187,18 @@ const styles = StyleSheet.create({
     color: '#333333',
     fontSize: 14,
     fontWeight: '700',
+  },
+  labelRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  calculatorToggle: {
+    color: '#2563EB',
+    fontSize: 14,
+    fontWeight: '700',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
   },
   input: {
     backgroundColor: '#F4F4F4',
