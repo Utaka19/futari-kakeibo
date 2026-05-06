@@ -13,6 +13,7 @@ import {
 import { ExpenseForm } from '@/src/components/ExpenseForm';
 import { ExpenseList } from '@/src/components/ExpenseList';
 import { ExpenseSummary } from '@/src/components/ExpenseSummary';
+import { MonthSelector } from '@/src/components/MonthSelector';
 import { SettlementSummary } from '@/src/components/SettlementSummary';
 import { loadExpenses, saveExpenses } from '@/src/storage/expensesStorage';
 import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
@@ -191,6 +192,14 @@ export default function HomeScreen() {
     });
   };
 
+  const moveToPrevMonth = () => {
+    setSelectedYearMonth((current) => shiftYearMonth(current, -1));
+  };
+
+  const moveToNextMonth = () => {
+    setSelectedYearMonth((current) => shiftYearMonth(current, 1));
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -204,15 +213,11 @@ export default function HomeScreen() {
             <Text style={styles.subtitle}>使ったその場で登録して、折半額を自動計算します。</Text>
           </View>
 
-          <View style={styles.monthSwitcher}>
-            <Text style={styles.monthButton} onPress={() => setSelectedYearMonth((current) => shiftYearMonth(current, -1))}>
-              前の月
-            </Text>
-            <Text style={styles.currentMonth}>{selectedYearMonth}</Text>
-            <Text style={styles.monthButton} onPress={() => setSelectedYearMonth((current) => shiftYearMonth(current, 1))}>
-              次の月
-            </Text>
-          </View>
+          <MonthSelector
+            selectedYearMonth={selectedYearMonth}
+            onPrevMonth={moveToPrevMonth}
+            onNextMonth={moveToNextMonth}
+          />
 
           <ExpenseSummary
             totalAmount={expenseSummary.totalAmount}
@@ -291,26 +296,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: 6,
-  },
-  monthSwitcher: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    padding: 12,
-  },
-  monthButton: {
-    color: '#2563EB',
-    fontSize: 14,
-    fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-  },
-  currentMonth: {
-    color: '#111827',
-    fontSize: 18,
-    fontWeight: '700',
   },
 });
