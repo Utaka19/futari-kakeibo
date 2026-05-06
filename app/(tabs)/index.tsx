@@ -1,14 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ExpenseForm } from '@/src/components/ExpenseForm';
 import { ExpenseList } from '@/src/components/ExpenseList';
@@ -17,7 +8,7 @@ import { MonthSelector } from '@/src/components/MonthSelector';
 import { SettlementSummary } from '@/src/components/SettlementSummary';
 import { loadExpenses, saveExpenses } from '@/src/storage/expensesStorage';
 import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
-import { formatDateInput, formatYearMonth, shiftYearMonth } from '@/src/utils/date';
+import { formatDateInput, formatYearMonth, isValidDateInput, shiftYearMonth } from '@/src/utils/date';
 import { calculateExpenseSummary } from '@/src/utils/expenseSummary';
 import { calculateSettlement } from '@/src/utils/settlement';
 
@@ -34,6 +25,8 @@ export default function HomeScreen() {
   const [isSplit, setIsSplit] = useState(true);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [selectedYearMonth, setSelectedYearMonth] = useState(formatYearMonth(new Date()));
+  const [amountErrorMessage, setAmountErrorMessage] = useState('');
+  const [dateErrorMessage, setDateErrorMessage] = useState('');
 
   const visibleExpenses = useMemo(
     () => expenses.filter((expense) => expense.date.startsWith(selectedYearMonth)),
@@ -70,13 +63,30 @@ export default function HomeScreen() {
     setIsShared(true);
     setIsSplit(true);
     setEditingExpenseId(null);
+    setAmountErrorMessage('');
+    setDateErrorMessage('');
+  };
+
+  const changeAmountText = (value: string) => {
+    setAmountText(value);
+    setAmountErrorMessage('');
+  };
+
+  const changeDate = (value: string) => {
+    setDate(value);
+    setDateErrorMessage('');
   };
 
   const submitExpense = () => {
     const amount = Number(amountText);
 
-    if (!amountText || Number.isNaN(amount) || amount <= 0) {
-      Alert.alert('入力エラー', '金額を1円以上で入力してください。');
+    if (!amountText || Number.isNaN(amount) || amount <= 0 || !Number.isInteger(amount)) {
+      setAmountErrorMessage('金額は1円以上の整数で入力してください。');
+      return;
+    }
+
+    if (!isValidDateInput(date)) {
+      setDateErrorMessage('日付はYYYY-MM-DD形式の実在する日付で入力してください。');
       return;
     }
 
@@ -239,12 +249,14 @@ export default function HomeScreen() {
             isShared={isShared}
             isSplit={isSplit}
             isEditing={!!editingExpenseId}
+            amountErrorMessage={amountErrorMessage}
+            dateErrorMessage={dateErrorMessage}
             categories={categories}
-            onAmountTextChange={setAmountText}
+            onAmountTextChange={changeAmountText}
             onPayerChange={setPayer}
             onCategoryChange={setCategory}
             onMemoChange={setMemo}
-            onDateChange={setDate}
+            onDateChange={changeDate}
             onIsSharedChange={setIsShared}
             onIsSplitChange={setIsSplit}
             onSubmit={submitExpense}

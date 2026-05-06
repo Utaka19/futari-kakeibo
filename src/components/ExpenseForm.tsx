@@ -11,6 +11,8 @@ type ExpenseFormProps = {
   isShared: boolean;
   isSplit: boolean;
   isEditing: boolean;
+  amountErrorMessage: string;
+  dateErrorMessage: string;
   categories: ExpenseCategory[];
   onAmountTextChange: (value: string) => void;
   onPayerChange: (value: Payer) => void;
@@ -32,6 +34,8 @@ export function ExpenseForm({
   isShared,
   isSplit,
   isEditing,
+  amountErrorMessage,
+  dateErrorMessage,
   categories,
   onAmountTextChange,
   onPayerChange,
@@ -53,8 +57,9 @@ export function ExpenseForm({
         onChangeText={onAmountTextChange}
         keyboardType="number-pad"
         placeholder="例: 3200"
-        style={styles.input}
+        style={[styles.input, amountErrorMessage && styles.inputError]}
       />
+      {!!amountErrorMessage && <Text style={styles.errorText}>{amountErrorMessage}</Text>}
 
       <Text style={styles.label}>支払者</Text>
       <View style={styles.segment}>
@@ -91,8 +96,9 @@ export function ExpenseForm({
         value={date}
         onChangeText={onDateChange}
         placeholder="例: 2026-05-05"
-        style={styles.input}
+        style={[styles.input, dateErrorMessage && styles.inputError]}
       />
+      {!!dateErrorMessage && <Text style={styles.errorText}>{dateErrorMessage}</Text>}
 
       <ToggleRow label="共有" value={isShared} onValueChange={onIsSharedChange} />
       <ToggleRow label="折半" value={isSplit} onValueChange={onIsSplitChange} />
@@ -173,6 +179,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  inputError: {
+    borderColor: '#DC2626',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '700',
   },
   memoInput: {
     fontSize: 16,
