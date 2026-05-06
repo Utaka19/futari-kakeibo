@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import {
+  calculateAddition,
+  getCurrentAmountPartLength,
+  maxAmountDigits,
+} from '@/src/utils/amountCalculator';
+
 type AmountCalculatorProps = {
   onApply: (amount: string) => void;
 };
 
 type CalculatorKey = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '+' | '⌫';
 
-const maxAmountDigits = 8;
 const keyRows: CalculatorKey[][] = [
   ['7', '8', '9'],
   ['4', '5', '6'],
@@ -26,7 +31,7 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
         return current;
       }
 
-      if (key !== '+' && getCurrentValueLength(current) >= maxAmountDigits) {
+      if (key !== '+' && getCurrentAmountPartLength(current) >= maxAmountDigits) {
         setErrorMessage('各金額は8桁以内で入力してください。');
         return current;
       }
@@ -49,12 +54,12 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
   const apply = () => {
     const result = calculateAddition(expression, { allowTrailingPlus: false });
 
-    if (!result.isValid) {
+    if (!result.success) {
       setErrorMessage('計算内容を確認してください。');
       return;
     }
 
-    onApply(String(result.total));
+    onApply(String(result.result));
     clear();
   };
 
@@ -71,10 +76,10 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
     <View style={styles.container}>
       <Text style={styles.display}>{expression || '0'}</Text>
       {!!expression && (
-        <Text style={[styles.previewText, !preview.isValid && styles.previewErrorText]}>
-          {preview.isValid
-            ? `計算結果: ${preview.total}円`
-            : preview.errorMessage}
+        <Text style={[styles.previewText, !preview.success && styles.previewErrorText]}>
+          {preview.success
+            ? `計算結果: ${preview.result}円`
+            : preview.error}
         </Text>
       )}
       {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
@@ -103,66 +108,6 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
 
 function isBackspaceKey(key: CalculatorKey): boolean {
   return key === '⌫';
-}
-
-type CalculationResult =
-  | {
-      isValid: true;
-      total: number;
-    }
-  | {
-      errorMessage: string;
-      isValid: false;
-    };
-
-function calculateAddition(
-  expression: string,
-  { allowTrailingPlus }: { allowTrailingPlus: boolean },
-): CalculationResult {
-  const targetExpression =
-    allowTrailingPlus && expression.endsWith('+') ? expression.slice(0, -1) : expression;
-
-  if (!targetExpression || targetExpression.includes('++') || targetExpression.endsWith('+')) {
-    return {
-      errorMessage: '計算式を確認してください。',
-      isValid: false,
-    };
-  }
-
-  const values = targetExpression.split('+');
-  const total = values.reduce((sum, value) => {
-    if (!/^\d+$/.test(value) || value.length > maxAmountDigits) {
-      return Number.NaN;
-    }
-
-    return sum + Number(value);
-  }, 0);
-
-  if (!Number.isInteger(total) || total <= 0) {
-    return {
-      errorMessage: '計算式を確認してください。',
-      isValid: false,
-    };
-  }
-
-  if (String(total).length > maxAmountDigits) {
-    return {
-      errorMessage: '計算結果は8桁以内にしてください。',
-      isValid: false,
-    };
-  }
-
-  return {
-    isValid: true,
-    total,
-  };
-}
-
-function getCurrentValueLength(expression: string): number {
-  const values = expression.split('+');
-  const currentValue = values[values.length - 1];
-
-  return currentValue.length;
 }
 
 const styles = StyleSheet.create({
