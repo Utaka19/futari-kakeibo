@@ -8,7 +8,12 @@ import { MonthSelector } from '@/src/components/MonthSelector';
 import { SettlementSummary } from '@/src/components/SettlementSummary';
 import { loadExpenses, saveExpenses } from '@/src/storage/expensesStorage';
 import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
-import { formatDateInput, formatYearMonth, isValidDateInput, shiftYearMonth } from '@/src/utils/date';
+import {
+  formatDateInput,
+  getCurrentYearMonth,
+  isValidDateInput,
+  shiftYearMonth,
+} from '@/src/utils/date';
 import { calculateExpenseSummary } from '@/src/utils/expenseSummary';
 import { calculateSettlement } from '@/src/utils/settlement';
 
@@ -24,7 +29,7 @@ export default function HomeScreen() {
   const [isShared, setIsShared] = useState(true);
   const [isSplit, setIsSplit] = useState(true);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
-  const [selectedYearMonth, setSelectedYearMonth] = useState(formatYearMonth(new Date()));
+  const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentYearMonth());
   const [amountErrorMessage, setAmountErrorMessage] = useState('');
   const [dateErrorMessage, setDateErrorMessage] = useState('');
 
@@ -210,6 +215,10 @@ export default function HomeScreen() {
     setSelectedYearMonth((current) => shiftYearMonth(current, 1));
   };
 
+  const handleGoToCurrentMonth = () => {
+    setSelectedYearMonth(getCurrentYearMonth());
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -227,6 +236,7 @@ export default function HomeScreen() {
             selectedYearMonth={selectedYearMonth}
             onPrevMonth={moveToPrevMonth}
             onNextMonth={moveToNextMonth}
+            onGoToCurrentMonth={handleGoToCurrentMonth}
           />
 
           <ExpenseSummary

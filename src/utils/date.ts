@@ -13,6 +13,10 @@ export function formatYearMonth(date: Date): string {
   return `${year}-${month}`;
 }
 
+export function getCurrentYearMonth(): string {
+  return formatYearMonth(new Date());
+}
+
 export function shiftYearMonth(yearMonth: string, amount: number): string {
   const [yearText, monthText] = yearMonth.split('-');
   const year = Number(yearText);
