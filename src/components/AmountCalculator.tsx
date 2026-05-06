@@ -11,6 +11,7 @@ const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '+'];
 export function AmountCalculator({ onApply }: AmountCalculatorProps) {
   const [expression, setExpression] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const preview = calculateAddition(expression, { allowTrailingPlus: true });
 
   const appendKey = (key: string) => {
     setExpression((current) => {
@@ -35,20 +36,27 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
   };
 
   const apply = () => {
-    const result = calculateAddition(expression);
+    const result = calculateAddition(expression, { allowTrailingPlus: false });
 
-    if (result === null) {
+    if (!result.isValid) {
       setErrorMessage('計算内容を確認してください。');
       return;
     }
 
-    onApply(String(result));
+    onApply(String(result.total));
     clear();
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.display}>{expression || '0'}</Text>
+      {!!expression && (
+        <Text style={[styles.previewText, !preview.isValid && styles.previewErrorText]}>
+          {preview.isValid
+            ? `計算結果: ${preview.total}円`
+            : preview.errorMessage}
+        </Text>
+      )}
       {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
       <View style={styles.keyGrid}>
         {keys.map((key) => (
@@ -70,12 +78,31 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
   );
 }
 
-function calculateAddition(expression: string): number | null {
-  if (!expression || expression.endsWith('+') || expression.includes('++')) {
-    return null;
+type CalculationResult =
+  | {
+      isValid: true;
+      total: number;
+    }
+  | {
+      errorMessage: string;
+      isValid: false;
+    };
+
+function calculateAddition(
+  expression: string,
+  { allowTrailingPlus }: { allowTrailingPlus: boolean },
+): CalculationResult {
+  const targetExpression =
+    allowTrailingPlus && expression.endsWith('+') ? expression.slice(0, -1) : expression;
+
+  if (!targetExpression || targetExpression.includes('++') || targetExpression.endsWith('+')) {
+    return {
+      errorMessage: '計算式を確認してください。',
+      isValid: false,
+    };
   }
 
-  const values = expression.split('+');
+  const values = targetExpression.split('+');
   const total = values.reduce((sum, value) => {
     if (!/^\d+$/.test(value) || value.length > maxAmountDigits) {
       return Number.NaN;
@@ -84,11 +111,24 @@ function calculateAddition(expression: string): number | null {
     return sum + Number(value);
   }, 0);
 
-  if (!Number.isInteger(total) || total <= 0 || String(total).length > maxAmountDigits) {
-    return null;
+  if (!Number.isInteger(total) || total <= 0) {
+    return {
+      errorMessage: '計算式を確認してください。',
+      isValid: false,
+    };
   }
 
-  return total;
+  if (String(total).length > maxAmountDigits) {
+    return {
+      errorMessage: '計算結果は8桁以内にしてください。',
+      isValid: false,
+    };
+  }
+
+  return {
+    isValid: true,
+    total,
+  };
 }
 
 function getCurrentValueLength(expression: string): number {
@@ -121,6 +161,14 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontSize: 13,
     fontWeight: '700',
+  },
+  previewText: {
+    color: '#374151',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  previewErrorText: {
+    color: '#DC2626',
   },
   keyGrid: {
     flexDirection: 'row',
