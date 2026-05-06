@@ -6,7 +6,7 @@ type AmountCalculatorProps = {
 };
 
 const maxAmountDigits = 8;
-const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '+'];
+const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '+', '⌫'];
 
 export function AmountCalculator({ onApply }: AmountCalculatorProps) {
   const [expression, setExpression] = useState('');
@@ -64,20 +64,22 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
       {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
       <View style={styles.keyGrid}>
         {keys.map((key) => (
-          <Pressable key={key} style={styles.keyButton} onPress={() => appendKey(key)}>
+          <Pressable
+            key={key}
+            style={styles.keyButton}
+            onPress={key === '⌫' ? backspace : () => appendKey(key)}>
             <Text style={styles.keyButtonText}>{key}</Text>
           </Pressable>
         ))}
-        <Pressable style={[styles.keyButton, styles.clearButton]} onPress={backspace}>
-          <Text style={styles.clearButtonText}>⌫</Text>
-        </Pressable>
-        <Pressable style={[styles.keyButton, styles.clearButton]} onPress={clear}>
+      </View>
+      <View style={styles.actionRow}>
+        <Pressable style={[styles.actionButton, styles.clearButton]} onPress={clear}>
           <Text style={styles.clearButtonText}>クリア</Text>
         </Pressable>
+        <Pressable style={[styles.actionButton, styles.applyButton]} onPress={apply}>
+          <Text style={styles.applyButtonText}>決定</Text>
+        </Pressable>
       </View>
-      <Pressable style={styles.applyButton} onPress={apply}>
-        <Text style={styles.applyButtonText}>決定</Text>
-      </Pressable>
     </View>
   );
 }
@@ -202,11 +204,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  applyButton: {
+  actionRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
     alignItems: 'center',
-    backgroundColor: '#2563EB',
     borderRadius: 8,
+    flex: 1,
     paddingVertical: 12,
+  },
+  applyButton: {
+    backgroundColor: '#2563EB',
   },
   applyButtonText: {
     color: '#FFFFFF',
