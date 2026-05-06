@@ -7,6 +7,7 @@ import { ExpenseSummary } from '@/src/components/ExpenseSummary';
 import { MonthSelector } from '@/src/components/MonthSelector';
 import { SettlementSummary } from '@/src/components/SettlementSummary';
 import { loadExpenses, saveExpenses } from '@/src/storage/expensesStorage';
+import { loadBillingStartDay, saveBillingStartDay } from '@/src/storage/settingsStorage';
 import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
 import {
   formatDateInput,
@@ -59,11 +60,17 @@ export default function HomeScreen() {
   const hasSettlementTarget = settlement.targetTotal > 0;
 
   useEffect(() => {
-    const restoreExpenses = async () => {
-      setExpenses(await loadExpenses());
+    const restoreAppState = async () => {
+      const [savedExpenses, savedBillingStartDay] = await Promise.all([
+        loadExpenses(),
+        loadBillingStartDay(),
+      ]);
+
+      setExpenses(savedExpenses);
+      setBillingStartDay(savedBillingStartDay);
     };
 
-    restoreExpenses();
+    restoreAppState();
   }, []);
 
   const resetForm = () => {
@@ -227,11 +234,21 @@ export default function HomeScreen() {
   };
 
   const decreaseBillingStartDay = () => {
-    setBillingStartDay((current) => Math.max(current - 1, 1));
+    setBillingStartDay((current) => {
+      const nextBillingStartDay = Math.max(current - 1, 1);
+      saveBillingStartDay(nextBillingStartDay);
+
+      return nextBillingStartDay;
+    });
   };
 
   const increaseBillingStartDay = () => {
-    setBillingStartDay((current) => Math.min(current + 1, 28));
+    setBillingStartDay((current) => {
+      const nextBillingStartDay = Math.min(current + 1, 28);
+      saveBillingStartDay(nextBillingStartDay);
+
+      return nextBillingStartDay;
+    });
   };
 
   return (
