@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   calculateAddition,
+  formatCalculatorExpression,
   getCurrentAmountPartLength,
   maxAmountDigits,
 } from '@/src/utils/amountCalculator';
@@ -74,11 +75,11 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.display}>{expression || '0'}</Text>
+      <Text style={styles.display}>{expression ? formatCalculatorExpression(expression) : '0'}</Text>
       {!!expression && (
         <Text style={[styles.previewText, !preview.success && styles.previewErrorText]}>
           {preview.success
-            ? `計算結果: ${preview.result}円`
+            ? `計算結果: ${preview.result.toLocaleString('ja-JP')}円`
             : preview.error}
         </Text>
       )}

@@ -60,6 +60,13 @@ export function getCurrentAmountPartLength(expression: string): number {
   return currentValue.length;
 }
 
+export function formatCalculatorExpression(expression: string): string {
+  return expression
+    .split('+')
+    .map((value) => (value ? Number(value).toLocaleString('ja-JP') : ''))
+    .join(' + ');
+}
+
 function isValidAmountPart(value: string): boolean {
   return /^\d+$/.test(value) && !isOverMaxDigits(value);
 }
