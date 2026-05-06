@@ -5,8 +5,15 @@ type AmountCalculatorProps = {
   onApply: (amount: string) => void;
 };
 
+type CalculatorKey = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '+' | '⌫';
+
 const maxAmountDigits = 8;
-const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '+', '⌫'];
+const keyRows: CalculatorKey[][] = [
+  ['7', '8', '9'],
+  ['4', '5', '6'],
+  ['1', '2', '3'],
+  ['0', '+', '⌫'],
+];
 
 export function AmountCalculator({ onApply }: AmountCalculatorProps) {
   const [expression, setExpression] = useState('');
@@ -51,6 +58,15 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
     clear();
   };
 
+  const pressKey = (key: CalculatorKey) => {
+    if (isBackspaceKey(key)) {
+      backspace();
+      return;
+    }
+
+    appendKey(key);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.display}>{expression || '0'}</Text>
@@ -63,13 +79,14 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
       )}
       {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
       <View style={styles.keyGrid}>
-        {keys.map((key) => (
-          <Pressable
-            key={key}
-            style={styles.keyButton}
-            onPress={key === '⌫' ? backspace : () => appendKey(key)}>
-            <Text style={styles.keyButtonText}>{key}</Text>
-          </Pressable>
+        {keyRows.map((row) => (
+          <View key={row.join('-')} style={styles.keyRow}>
+            {row.map((key) => (
+              <Pressable key={key} style={styles.keyButton} onPress={() => pressKey(key)}>
+                <Text style={styles.keyButtonText}>{key}</Text>
+              </Pressable>
+            ))}
+          </View>
         ))}
       </View>
       <View style={styles.actionRow}>
@@ -82,6 +99,10 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
       </View>
     </View>
   );
+}
+
+function isBackspaceKey(key: CalculatorKey): boolean {
+  return key === '⌫';
 }
 
 type CalculationResult =
@@ -177,8 +198,10 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   keyGrid: {
+    gap: 8,
+  },
+  keyRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
   },
   keyButton: {
@@ -187,8 +210,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderRadius: 6,
     borderWidth: 1,
-    flexBasis: '22%',
-    flexGrow: 1,
+    flex: 1,
     paddingVertical: 10,
   },
   keyButtonText: {
