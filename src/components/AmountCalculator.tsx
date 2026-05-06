@@ -5,6 +5,7 @@ type AmountCalculatorProps = {
   onApply: (amount: string) => void;
 };
 
+const maxAmountDigits = 8;
 const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '+'];
 
 export function AmountCalculator({ onApply }: AmountCalculatorProps) {
@@ -12,7 +13,19 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
   const [errorMessage, setErrorMessage] = useState('');
 
   const appendKey = (key: string) => {
-    setExpression((current) => `${current}${key}`);
+    setExpression((current) => {
+      if (key !== '+' && getCurrentValueLength(current) >= maxAmountDigits) {
+        setErrorMessage('各金額は8桁以内で入力してください。');
+        return current;
+      }
+
+      setErrorMessage('');
+      return `${current}${key}`;
+    });
+  };
+
+  const backspace = () => {
+    setExpression((current) => current.slice(0, -1));
     setErrorMessage('');
   };
 
@@ -43,6 +56,9 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
             <Text style={styles.keyButtonText}>{key}</Text>
           </Pressable>
         ))}
+        <Pressable style={[styles.keyButton, styles.clearButton]} onPress={backspace}>
+          <Text style={styles.clearButtonText}>⌫</Text>
+        </Pressable>
         <Pressable style={[styles.keyButton, styles.clearButton]} onPress={clear}>
           <Text style={styles.clearButtonText}>クリア</Text>
         </Pressable>
@@ -61,18 +77,25 @@ function calculateAddition(expression: string): number | null {
 
   const values = expression.split('+');
   const total = values.reduce((sum, value) => {
-    if (!/^\d+$/.test(value)) {
+    if (!/^\d+$/.test(value) || value.length > maxAmountDigits) {
       return Number.NaN;
     }
 
     return sum + Number(value);
   }, 0);
 
-  if (!Number.isInteger(total) || total <= 0) {
+  if (!Number.isInteger(total) || total <= 0 || String(total).length > maxAmountDigits) {
     return null;
   }
 
   return total;
+}
+
+function getCurrentValueLength(expression: string): number {
+  const values = expression.split('+');
+  const currentValue = values[values.length - 1];
+
+  return currentValue.length;
 }
 
 const styles = StyleSheet.create({
