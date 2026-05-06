@@ -17,6 +17,11 @@ export function getCurrentYearMonth(): string {
   return formatYearMonth(new Date());
 }
 
+export type BillingPeriod = {
+  startDate: string;
+  endDate: string;
+};
+
 export function shiftYearMonth(yearMonth: string, amount: number): string {
   const [yearText, monthText] = yearMonth.split('-');
   const year = Number(yearText);
@@ -45,4 +50,35 @@ export function isValidDateInput(value: string): boolean {
     date.getMonth() === month - 1 &&
     date.getDate() === day
   );
+}
+
+export function getBillingPeriod(yearMonth: string, startDay: number): BillingPeriod {
+  const [yearText, monthText] = yearMonth.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const safeStartDay = Math.min(Math.max(startDay, 1), 28);
+
+  if (!year || !month) {
+    return getBillingPeriod(getCurrentYearMonth(), safeStartDay);
+  }
+
+  if (safeStartDay === 1) {
+    return {
+      startDate: formatDateInput(new Date(year, month - 1, 1)),
+      endDate: formatDateInput(new Date(year, month, 0)),
+    };
+  }
+
+  return {
+    startDate: formatDateInput(new Date(year, month - 2, safeStartDay)),
+    endDate: formatDateInput(new Date(year, month - 1, safeStartDay - 1)),
+  };
+}
+
+export function isDateInBillingPeriod(date: string, period: BillingPeriod): boolean {
+  if (!isValidDateInput(date)) {
+    return false;
+  }
+
+  return date >= period.startDate && date <= period.endDate;
 }

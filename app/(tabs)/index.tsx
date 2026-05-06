@@ -11,6 +11,8 @@ import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
 import {
   formatDateInput,
   getCurrentYearMonth,
+  getBillingPeriod,
+  isDateInBillingPeriod,
   isValidDateInput,
   shiftYearMonth,
 } from '@/src/utils/date';
@@ -30,12 +32,17 @@ export default function HomeScreen() {
   const [isSplit, setIsSplit] = useState(true);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentYearMonth());
+  const [billingStartDay, setBillingStartDay] = useState(1);
   const [amountErrorMessage, setAmountErrorMessage] = useState('');
   const [dateErrorMessage, setDateErrorMessage] = useState('');
 
+  const billingPeriod = useMemo(
+    () => getBillingPeriod(selectedYearMonth, billingStartDay),
+    [selectedYearMonth, billingStartDay],
+  );
   const visibleExpenses = useMemo(
-    () => expenses.filter((expense) => expense.date.startsWith(selectedYearMonth)),
-    [expenses, selectedYearMonth],
+    () => expenses.filter((expense) => isDateInBillingPeriod(expense.date, billingPeriod)),
+    [expenses, billingPeriod],
   );
   const settlement = useMemo(() => calculateSettlement(visibleExpenses), [visibleExpenses]);
   const sortedExpenses = useMemo(
@@ -188,7 +195,7 @@ export default function HomeScreen() {
     setExpenses((currentExpenses) => {
       const nextExpenses = currentExpenses.map((expense) => {
         if (
-          expense.date.startsWith(selectedYearMonth) &&
+          isDateInBillingPeriod(expense.date, billingPeriod) &&
           expense.isShared &&
           expense.isSplit &&
           !expense.isSettled
@@ -219,6 +226,14 @@ export default function HomeScreen() {
     setSelectedYearMonth(getCurrentYearMonth());
   };
 
+  const decreaseBillingStartDay = () => {
+    setBillingStartDay((current) => Math.max(current - 1, 1));
+  };
+
+  const increaseBillingStartDay = () => {
+    setBillingStartDay((current) => Math.min(current + 1, 28));
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -238,6 +253,21 @@ export default function HomeScreen() {
             onNextMonth={moveToNextMonth}
             onGoToCurrentMonth={handleGoToCurrentMonth}
           />
+
+          <View style={styles.billingCard}>
+            <View style={styles.billingControls}>
+              <Text style={styles.billingButton} onPress={decreaseBillingStartDay}>
+                -1日
+              </Text>
+              <Text style={styles.billingTitle}>開始日: {billingStartDay}日</Text>
+              <Text style={styles.billingButton} onPress={increaseBillingStartDay}>
+                +1日
+              </Text>
+            </View>
+            <Text style={styles.billingPeriod}>
+              対象期間: {billingPeriod.startDate}〜{billingPeriod.endDate}
+            </Text>
+          </View>
 
           <ExpenseSummary
             totalAmount={expenseSummary.totalAmount}
@@ -318,5 +348,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: 6,
+  },
+  billingCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    marginBottom: 12,
+    padding: 12,
+  },
+  billingControls: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  billingButton: {
+    color: '#2563EB',
+    fontSize: 14,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  billingTitle: {
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  billingPeriod: {
+    color: '#666666',
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
