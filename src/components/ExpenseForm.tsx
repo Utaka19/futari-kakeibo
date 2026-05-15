@@ -60,44 +60,59 @@ export function ExpenseForm({
     <View style={styles.form}>
       {isEditing && <Text style={styles.editingText}>支出を編集中です</Text>}
 
-      <Text style={styles.label}>金額</Text>
-      <View style={styles.amountRow}>
-        <TextInput
-          value={amountText}
-          onChangeText={onAmountTextChange}
-          keyboardType="number-pad"
-          maxLength={8}
-          placeholder="例: 3200"
-          style={[styles.input, styles.amountInput, amountErrorMessage && styles.inputError]}
-        />
-        <Pressable
-          style={styles.calculatorButton}
-          onPress={() => setIsCalculatorOpen((current) => !current)}>
-          <Text style={styles.calculatorButtonText}>計算</Text>
-        </Pressable>
+      <View style={styles.formRow}>
+        <Text style={styles.rowLabel}>金額</Text>
+        <View style={styles.rowContent}>
+          <View style={styles.amountRow}>
+            <TextInput
+              value={amountText}
+              onChangeText={onAmountTextChange}
+              keyboardType="number-pad"
+              maxLength={8}
+              placeholder="例: 3200"
+              style={[styles.input, styles.amountInput, amountErrorMessage && styles.inputError]}
+            />
+            <Pressable
+              style={styles.calculatorButton}
+              onPress={() => setIsCalculatorOpen((current) => !current)}>
+              <Text style={styles.calculatorButtonText}>計算</Text>
+            </Pressable>
+          </View>
+        </View>
       </View>
       {!!amountErrorMessage && <Text style={styles.errorText}>{amountErrorMessage}</Text>}
       {isCalculatorOpen && <AmountCalculator onApply={applyCalculatedAmount} />}
 
-      <Text style={styles.label}>支払者</Text>
-      <View style={styles.segment}>
-        <SegmentButton active={payer === 'me'} label="自分" onPress={() => onPayerChange('me')} />
-        <SegmentButton
-          active={payer === 'partner'}
-          label="相手"
-          onPress={() => onPayerChange('partner')}
-        />
+      <View style={styles.formRow}>
+        <Text style={styles.rowLabel}>支払者</Text>
+        <View style={[styles.rowContent, styles.segment]}>
+          <SegmentButton active={payer === 'me'} label="自分" onPress={() => onPayerChange('me')} />
+          <SegmentButton
+            active={payer === 'partner'}
+            label="相手"
+            onPress={() => onPayerChange('partner')}
+          />
+        </View>
       </View>
 
-      <View style={styles.dateCategoryGroup}>
-        <Text style={styles.label}>日付</Text>
+      <View style={styles.formRow}>
+        <Text style={styles.rowLabel}>日付</Text>
         <TextInput
           value={date}
           onChangeText={onDateChange}
           maxLength={10}
           placeholder="例: 2026-05-05"
-          style={[styles.input, styles.compactInput, dateErrorMessage && styles.inputError]}
+          style={[
+            styles.input,
+            styles.compactInput,
+            styles.rowContent,
+            dateErrorMessage && styles.inputError,
+          ]}
         />
+      </View>
+      {!!dateErrorMessage && <Text style={styles.errorText}>{dateErrorMessage}</Text>}
+
+      <View style={styles.categoryGroup}>
         <Text style={styles.label}>カテゴリ</Text>
         <View style={styles.categoryGrid}>
           {categories.map((item) => (
@@ -110,15 +125,16 @@ export function ExpenseForm({
           ))}
         </View>
       </View>
-      {!!dateErrorMessage && <Text style={styles.errorText}>{dateErrorMessage}</Text>}
 
-      <Text style={styles.label}>メモ</Text>
-      <TextInput
-        value={memo}
-        onChangeText={onMemoChange}
-        placeholder="例: ランチ"
-        style={[styles.input, styles.compactInput, styles.memoInput]}
-      />
+      <View style={styles.formRow}>
+        <Text style={styles.rowLabel}>メモ</Text>
+        <TextInput
+          value={memo}
+          onChangeText={onMemoChange}
+          placeholder="例: ランチ"
+          style={[styles.input, styles.compactInput, styles.memoInput, styles.rowContent]}
+        />
+      </View>
 
       <ToggleRow label="ふたりの支出" value={isShared} onValueChange={onIsSharedChange} />
       {isShared && <ToggleRow label="精算対象" value={isSplit} onValueChange={onIsSplitChange} />}
@@ -191,6 +207,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  formRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  rowLabel: {
+    color: '#333333',
+    fontSize: 13,
+    fontWeight: '700',
+    width: 54,
+  },
+  rowContent: {
+    flex: 1,
+  },
   amountRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -247,7 +277,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
   },
-  dateCategoryGroup: {
+  categoryGroup: {
     gap: 7,
   },
   segmentButton: {
