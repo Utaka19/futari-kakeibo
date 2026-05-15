@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BillingStartDaySelector } from '@/src/components/BillingStartDaySelector';
 import { ExpenseForm } from '@/src/components/ExpenseForm';

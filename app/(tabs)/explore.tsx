@@ -1,4 +1,5 @@
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const screens = ['支出追加画面', '精算サマリー画面', '支出一覧画面'];
 const nextScreens = ['履歴詳細画面', 'パートナー設定画面', '月次レポート画面'];
