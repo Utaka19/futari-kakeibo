@@ -14,6 +14,7 @@ export function ExpenseSummary({
   meCategoryTotals,
   partnerCategoryTotals,
 }: ExpenseSummaryData) {
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isMeCategoryOpen, setIsMeCategoryOpen] = useState(false);
   const [isPartnerCategoryOpen, setIsPartnerCategoryOpen] = useState(false);
@@ -24,30 +25,43 @@ export function ExpenseSummary({
         <SummaryCard label="合計支出" amount={totalAmount} />
         <SummaryCard label="自分の支払合計" amount={mePaidAmount} />
         <SummaryCard label="相手の支払合計" amount={partnerPaidAmount} />
-        <SummaryCard label="共有支出" amount={sharedAmount} />
-        <SummaryCard label="折半対象" amount={splitAmount} />
       </View>
 
-      {categoryTotals.length > 0 && (
-        <View style={styles.categorySummary}>
-          <CollapsibleCategoryTotal
-            isOpen={isCategoryOpen}
-            items={categoryTotals}
-            title="カテゴリ別合計"
-            onToggle={() => setIsCategoryOpen((current) => !current)}
-          />
-          <CollapsibleCategoryTotal
-            isOpen={isMeCategoryOpen}
-            items={meCategoryTotals}
-            title="自分のカテゴリ別合計"
-            onToggle={() => setIsMeCategoryOpen((current) => !current)}
-          />
-          <CollapsibleCategoryTotal
-            isOpen={isPartnerCategoryOpen}
-            items={partnerCategoryTotals}
-            title="相手のカテゴリ別合計"
-            onToggle={() => setIsPartnerCategoryOpen((current) => !current)}
-          />
+      <Pressable
+        style={styles.detailToggle}
+        onPress={() => setIsDetailOpen((current) => !current)}>
+        <Text style={styles.detailToggleText}>
+          {isDetailOpen ? '詳細を閉じる' : '詳細を見る'}
+        </Text>
+      </Pressable>
+
+      {isDetailOpen && (
+        <View style={styles.detailSummary}>
+          <View style={styles.summaryCards}>
+            <SummaryCard label="共有支出" amount={sharedAmount} />
+            <SummaryCard label="折半対象" amount={splitAmount} />
+          </View>
+
+          <View style={styles.categorySummary}>
+            <CollapsibleCategoryTotal
+              isOpen={isCategoryOpen}
+              items={categoryTotals}
+              title="カテゴリ別合計"
+              onToggle={() => setIsCategoryOpen((current) => !current)}
+            />
+            <CollapsibleCategoryTotal
+              isOpen={isMeCategoryOpen}
+              items={meCategoryTotals}
+              title="自分のカテゴリ別合計"
+              onToggle={() => setIsMeCategoryOpen((current) => !current)}
+            />
+            <CollapsibleCategoryTotal
+              isOpen={isPartnerCategoryOpen}
+              items={partnerCategoryTotals}
+              title="相手のカテゴリ別合計"
+              onToggle={() => setIsPartnerCategoryOpen((current) => !current)}
+            />
+          </View>
         </View>
       )}
     </>
@@ -126,6 +140,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginTop: 8,
+  },
+  detailToggle: {
+    alignSelf: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  detailToggleText: {
+    color: '#2563EB',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  detailSummary: {
+    marginTop: 2,
   },
   categorySummary: {
     backgroundColor: '#FFFFFF',
