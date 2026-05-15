@@ -17,7 +17,7 @@ export function getCurrentYearMonth(): string {
   return formatYearMonth(new Date());
 }
 
-export function getCurrentBillingYearMonth(startDay: number): string {
+export function getCurrentBillingEndYearMonth(startDay: number): string {
   const today = new Date();
   const safeStartDay = Math.min(Math.max(startDay, 1), 28);
 
@@ -33,8 +33,11 @@ export type BillingPeriod = {
   endDate: string;
 };
 
-export function shiftYearMonth(yearMonth: string, amount: number): string {
-  const [yearText, monthText] = yearMonth.split('-');
+export function shiftBillingEndYearMonth(
+  billingEndYearMonth: string,
+  amount: number,
+): string {
+  const [yearText, monthText] = billingEndYearMonth.split('-');
   const year = Number(yearText);
   const month = Number(monthText);
 
@@ -75,8 +78,11 @@ export function normalizeDateInput(value: string): string | null {
   return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
 
-export function getBillingPeriod(yearMonth: string, startDay: number): BillingPeriod {
-  const [yearText, monthText] = yearMonth.split('-');
+export function getBillingPeriod(
+  billingEndYearMonth: string,
+  startDay: number,
+): BillingPeriod {
+  const [yearText, monthText] = billingEndYearMonth.split('-');
   const year = Number(yearText);
   const month = Number(monthText);
   const safeStartDay = Math.min(Math.max(startDay, 1), 28);
@@ -106,12 +112,13 @@ export function isDateInBillingPeriod(date: string, period: BillingPeriod): bool
   return date >= period.startDate && date <= period.endDate;
 }
 
-export function formatBillingMonthLabel(endDate: string): string {
-  if (!isValidDateInput(endDate)) {
-    return endDate;
+export function formatBillingEndYearMonthLabel(billingEndYearMonth: string): string {
+  const [year, month] = billingEndYearMonth.split('-');
+  const monthNumber = Number(month);
+
+  if (!/^\d{4}$/.test(year) || monthNumber < 1 || monthNumber > 12) {
+    return billingEndYearMonth;
   }
 
-  const [year, month] = endDate.split('-');
-
-  return `${year}年${Number(month)}月分`;
+  return `${year}年${monthNumber}月分`;
 }

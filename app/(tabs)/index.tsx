@@ -13,12 +13,12 @@ import { loadBillingStartDay, saveBillingStartDay } from '@/src/storage/settings
 import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
 import {
   formatDateInput,
-  getCurrentBillingYearMonth,
+  getCurrentBillingEndYearMonth,
   getBillingPeriod,
   isDateInBillingPeriod,
   isValidDateInput,
   normalizeDateInput,
-  shiftYearMonth,
+  shiftBillingEndYearMonth,
 } from '@/src/utils/date';
 import { calculateExpenseSummary } from '@/src/utils/expenseSummary';
 import { calculateSettlement } from '@/src/utils/settlement';
@@ -35,14 +35,16 @@ export default function HomeScreen() {
   const [isShared, setIsShared] = useState(true);
   const [isSplit, setIsSplit] = useState(true);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
-  const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentBillingYearMonth(1));
+  const [selectedBillingEndYearMonth, setSelectedBillingEndYearMonth] = useState(
+    getCurrentBillingEndYearMonth(1),
+  );
   const [billingStartDay, setBillingStartDay] = useState(1);
   const [amountErrorMessage, setAmountErrorMessage] = useState('');
   const [dateErrorMessage, setDateErrorMessage] = useState('');
 
   const billingPeriod = useMemo(
-    () => getBillingPeriod(selectedYearMonth, billingStartDay),
-    [selectedYearMonth, billingStartDay],
+    () => getBillingPeriod(selectedBillingEndYearMonth, billingStartDay),
+    [selectedBillingEndYearMonth, billingStartDay],
   );
   const visibleExpenses = useMemo(
     () => expenses.filter((expense) => isDateInBillingPeriod(expense.date, billingPeriod)),
@@ -61,7 +63,8 @@ export default function HomeScreen() {
     [visibleExpenses],
   );
   const hasSettlementTarget = settlement.targetTotal > 0;
-  const isCurrentPeriod = selectedYearMonth === getCurrentBillingYearMonth(billingStartDay);
+  const isCurrentPeriod =
+    selectedBillingEndYearMonth === getCurrentBillingEndYearMonth(billingStartDay);
 
   useEffect(() => {
     const restoreAppState = async () => {
@@ -72,7 +75,7 @@ export default function HomeScreen() {
 
       setExpenses(savedExpenses);
       setBillingStartDay(savedBillingStartDay);
-      setSelectedYearMonth(getCurrentBillingYearMonth(savedBillingStartDay));
+      setSelectedBillingEndYearMonth(getCurrentBillingEndYearMonth(savedBillingStartDay));
     };
 
     restoreAppState();
@@ -239,16 +242,16 @@ export default function HomeScreen() {
     });
   };
 
-  const moveToPrevMonth = () => {
-    setSelectedYearMonth((current) => shiftYearMonth(current, -1));
+  const moveToPrevPeriod = () => {
+    setSelectedBillingEndYearMonth((current) => shiftBillingEndYearMonth(current, -1));
   };
 
-  const moveToNextMonth = () => {
-    setSelectedYearMonth((current) => shiftYearMonth(current, 1));
+  const moveToNextPeriod = () => {
+    setSelectedBillingEndYearMonth((current) => shiftBillingEndYearMonth(current, 1));
   };
 
   const handleGoToCurrentMonth = () => {
-    setSelectedYearMonth(getCurrentBillingYearMonth(billingStartDay));
+    setSelectedBillingEndYearMonth(getCurrentBillingEndYearMonth(billingStartDay));
   };
 
   const decreaseBillingStartDay = () => {
@@ -284,9 +287,9 @@ export default function HomeScreen() {
 
           <MonthSelector
             isCurrentPeriod={isCurrentPeriod}
-            periodEndDate={billingPeriod.endDate}
-            onPrevMonth={moveToPrevMonth}
-            onNextMonth={moveToNextMonth}
+            selectedBillingEndYearMonth={selectedBillingEndYearMonth}
+            onPrevPeriod={moveToPrevPeriod}
+            onNextPeriod={moveToNextPeriod}
             onGoToCurrentMonth={handleGoToCurrentMonth}
           />
 

@@ -1,30 +1,32 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { formatBillingMonthLabel } from '@/src/utils/date';
+import { formatBillingEndYearMonthLabel } from '@/src/utils/date';
 
 type MonthSelectorProps = {
   isCurrentPeriod: boolean;
-  periodEndDate: string;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
+  selectedBillingEndYearMonth: string;
+  onPrevPeriod: () => void;
+  onNextPeriod: () => void;
   onGoToCurrentMonth: () => void;
 };
 
 export function MonthSelector({
   isCurrentPeriod,
-  periodEndDate,
-  onPrevMonth,
-  onNextMonth,
+  selectedBillingEndYearMonth,
+  onPrevPeriod,
+  onNextPeriod,
   onGoToCurrentMonth,
 }: MonthSelectorProps) {
   return (
     <View style={styles.container}>
       <View style={styles.monthSwitcher}>
-        <Text style={styles.monthButton} onPress={onPrevMonth}>
+        <Text style={styles.monthButton} onPress={onPrevPeriod}>
           前の期間
         </Text>
-        <Text style={styles.currentMonth}>{formatBillingMonthLabel(periodEndDate)}</Text>
-        <Text style={styles.monthButton} onPress={onNextMonth}>
+        <Text style={styles.currentMonth}>
+          {formatBillingEndYearMonthLabel(selectedBillingEndYearMonth)}
+        </Text>
+        <Text style={styles.monthButton} onPress={onNextPeriod}>
           次の期間
         </Text>
       </View>
