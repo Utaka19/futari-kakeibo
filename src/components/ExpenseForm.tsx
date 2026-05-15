@@ -119,8 +119,8 @@ export function ExpenseForm({
       />
       {!!dateErrorMessage && <Text style={styles.errorText}>{dateErrorMessage}</Text>}
 
-      <ToggleRow label="共有" value={isShared} onValueChange={onIsSharedChange} />
-      <ToggleRow label="折半" value={isSplit} onValueChange={onIsSplitChange} />
+      <ToggleRow label="ふたりの支出" value={isShared} onValueChange={onIsSharedChange} />
+      {isShared && <ToggleRow label="精算対象" value={isSplit} onValueChange={onIsSplitChange} />}
 
       <Pressable style={styles.addButton} onPress={onSubmit}>
         <Text style={styles.addButtonText}>{isEditing ? '保存' : '追加'}</Text>

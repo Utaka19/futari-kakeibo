@@ -98,6 +98,14 @@ export default function HomeScreen() {
     setDateErrorMessage('');
   };
 
+  const changeIsShared = (value: boolean) => {
+    setIsShared(value);
+
+    if (!value) {
+      setIsSplit(false);
+    }
+  };
+
   const submitExpense = () => {
     const amount = Number(amountText);
 
@@ -114,6 +122,7 @@ export default function HomeScreen() {
     }
 
     setDate(normalizedDate);
+    const nextIsSplit = isShared ? isSplit : false;
 
     if (editingExpenseId) {
       setExpenses((currentExpenses) => {
@@ -130,7 +139,7 @@ export default function HomeScreen() {
             memo: memo.trim(),
             date: normalizedDate,
             isShared,
-            isSplit,
+            isSplit: nextIsSplit,
           };
         });
         saveExpenses(nextExpenses);
@@ -149,7 +158,7 @@ export default function HomeScreen() {
       memo: memo.trim(),
       date: normalizedDate,
       isShared,
-      isSplit,
+      isSplit: nextIsSplit,
       isSettled: false,
     };
 
@@ -316,7 +325,7 @@ export default function HomeScreen() {
             onCategoryChange={setCategory}
             onMemoChange={setMemo}
             onDateChange={changeDate}
-            onIsSharedChange={setIsShared}
+            onIsSharedChange={changeIsShared}
             onIsSplitChange={setIsSplit}
             onSubmit={submitExpense}
             onCancelEdit={resetForm}
