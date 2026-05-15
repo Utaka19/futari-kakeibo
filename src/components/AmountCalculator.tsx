@@ -92,6 +92,7 @@ export function AmountCalculator({ onApply }: AmountCalculatorProps) {
 
               return (
                 <Pressable
+                  disabled={isDisabledOperator}
                   key={key}
                   style={[styles.keyButton, isDisabledOperator && styles.keyButtonDisabled]}
                   onPress={() => pressKey(key)}>
