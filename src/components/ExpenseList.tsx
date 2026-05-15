@@ -46,7 +46,15 @@ function ExpenseItem({
 
   return (
     <View style={[styles.expenseItem, expense.isSettled && styles.expenseItemSettled]}>
-      <View style={styles.expenseHeader}>
+      <View style={styles.expenseMainRow}>
+        <Text style={styles.expenseCategory}>{expense.category}</Text>
+        <Text style={styles.expenseAmount}>{formatYen(expense.amount)}円</Text>
+      </View>
+
+      <View style={styles.expenseMetaRow}>
+        <Text style={styles.expenseMeta}>
+          {expense.date} / 支払者: {expense.payer === 'me' ? '自分' : '相手'}
+        </Text>
         <Text
           style={[
             styles.expenseBadge,
@@ -57,15 +65,9 @@ function ExpenseItem({
           ]}>
           {badge.label}
         </Text>
-        <Text style={styles.expenseDate}>{expense.date}</Text>
       </View>
 
-      <View style={styles.expenseBody}>
-        <Text style={styles.expenseAmount}>{formatYen(expense.amount)}円</Text>
-        <Text style={styles.expenseCategory}>{expense.category}</Text>
-        {!!expense.memo && <Text style={styles.expenseMemo}>{expense.memo}</Text>}
-        <Text style={styles.expenseMeta}>支払者: {expense.payer === 'me' ? '自分' : '相手'}</Text>
-      </View>
+      {!!expense.memo && <Text style={styles.expenseMemo}>{expense.memo}</Text>}
 
       <View style={styles.expenseActions}>
         {expense.isSettled && (
@@ -134,64 +136,66 @@ const styles = StyleSheet.create({
   expenseItem: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
-    marginBottom: 10,
-    padding: 14,
+    marginBottom: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   expenseItemSettled: {
     backgroundColor: '#F3F4F6',
   },
-  expenseHeader: {
+  expenseMainRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  expenseDate: {
-    color: '#6B7280',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  expenseBody: {
-    marginBottom: 12,
+    gap: 10,
   },
   expenseAmount: {
     color: '#222222',
-    fontSize: 26,
+    fontSize: 16,
     fontWeight: '700',
+    textAlign: 'right',
   },
   expenseCategory: {
-    color: '#374151',
-    fontSize: 13,
+    color: '#222222',
+    flex: 1,
+    fontSize: 14,
     fontWeight: '700',
-    marginTop: 5,
+  },
+  expenseMetaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'space-between',
+    marginTop: 4,
   },
   expenseMemo: {
     color: '#555555',
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 15,
     marginTop: 4,
   },
   expenseMeta: {
     color: '#666666',
-    fontSize: 13,
-    marginTop: 4,
+    flex: 1,
+    fontSize: 11,
   },
   expenseActions: {
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 5,
     justifyContent: 'flex-end',
+    marginTop: 6,
   },
   expenseBadge: {
     backgroundColor: '#EEF2F7',
-    borderRadius: 6,
+    borderRadius: 999,
     color: '#374151',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
     overflow: 'hidden',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   expenseBadgeTarget: {
     backgroundColor: '#DBEAFE',
@@ -210,36 +214,36 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   deleteButton: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
   },
   unsettleButton: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F9FF',
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
   },
   unsettleButtonText: {
     color: '#075985',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
   },
   editButton: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFFBEB',
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
   },
   editButtonText: {
     color: '#92400E',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
   },
   deleteButtonText: {
     color: '#991B1B',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
   },
 });
