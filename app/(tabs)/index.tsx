@@ -39,6 +39,7 @@ export default function HomeScreen() {
     getCurrentBillingEndYearMonth(1),
   );
   const [billingStartDay, setBillingStartDay] = useState(1);
+  const [isBillingStartDayEditorOpen, setIsBillingStartDayEditorOpen] = useState(false);
   const [amountErrorMessage, setAmountErrorMessage] = useState('');
   const [dateErrorMessage, setDateErrorMessage] = useState('');
 
@@ -254,6 +255,14 @@ export default function HomeScreen() {
     setSelectedBillingEndYearMonth(getCurrentBillingEndYearMonth(billingStartDay));
   };
 
+  const openBillingStartDayEditor = () => {
+    setIsBillingStartDayEditorOpen(true);
+  };
+
+  const closeBillingStartDayEditor = () => {
+    setIsBillingStartDayEditorOpen(false);
+  };
+
   const decreaseBillingStartDay = () => {
     setBillingStartDay((current) => {
       const nextBillingStartDay = Math.max(current - 1, 1);
@@ -294,11 +303,25 @@ export default function HomeScreen() {
           />
 
           <View style={styles.billingCard}>
-            <BillingStartDaySelector
-              billingStartDay={billingStartDay}
-              onDecrease={decreaseBillingStartDay}
-              onIncrease={increaseBillingStartDay}
-            />
+            <View style={styles.billingSettingHeader}>
+              <Text style={styles.billingSettingText}>締め日設定: {billingStartDay}日開始</Text>
+              {isBillingStartDayEditorOpen ? (
+                <Text style={styles.billingSettingButton} onPress={closeBillingStartDayEditor}>
+                  完了
+                </Text>
+              ) : (
+                <Text style={styles.billingSettingButton} onPress={openBillingStartDayEditor}>
+                  変更
+                </Text>
+              )}
+            </View>
+            {isBillingStartDayEditorOpen && (
+              <BillingStartDaySelector
+                billingStartDay={billingStartDay}
+                onDecrease={decreaseBillingStartDay}
+                onIncrease={increaseBillingStartDay}
+              />
+            )}
             <Text style={styles.billingPeriod}>
               対象期間: {billingPeriod.startDate}〜{billingPeriod.endDate}
             </Text>
@@ -389,6 +412,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     padding: 12,
+  },
+  billingSettingHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  billingSettingText: {
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  billingSettingButton: {
+    color: '#2563EB',
+    fontSize: 14,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   billingPeriod: {
     color: '#666666',
