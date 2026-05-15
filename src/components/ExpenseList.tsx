@@ -46,15 +46,7 @@ function ExpenseItem({
 
   return (
     <View style={[styles.expenseItem, expense.isSettled && styles.expenseItemSettled]}>
-      <View style={styles.expenseContent}>
-        <Text style={styles.expenseAmount}>{formatYen(expense.amount)}円</Text>
-        <Text style={styles.expenseCategory}>
-          {expense.category} / {expense.date}
-        </Text>
-        {!!expense.memo && <Text style={styles.expenseMemo}>{expense.memo}</Text>}
-        <Text style={styles.expenseMeta}>支払者: {expense.payer === 'me' ? '自分' : '相手'}</Text>
-      </View>
-      <View style={styles.expenseActions}>
+      <View style={styles.expenseHeader}>
         <Text
           style={[
             styles.expenseBadge,
@@ -65,6 +57,17 @@ function ExpenseItem({
           ]}>
           {badge.label}
         </Text>
+        <Text style={styles.expenseDate}>{expense.date}</Text>
+      </View>
+
+      <View style={styles.expenseBody}>
+        <Text style={styles.expenseAmount}>{formatYen(expense.amount)}円</Text>
+        <Text style={styles.expenseCategory}>{expense.category}</Text>
+        {!!expense.memo && <Text style={styles.expenseMemo}>{expense.memo}</Text>}
+        <Text style={styles.expenseMeta}>支払者: {expense.payer === 'me' ? '自分' : '相手'}</Text>
+      </View>
+
+      <View style={styles.expenseActions}>
         {expense.isSettled && (
           <Pressable style={styles.unsettleButton} onPress={() => onUnsettle(expense.id)}>
             <Text style={styles.unsettleButtonText}>未精算に戻す</Text>
@@ -129,24 +132,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   expenseItem: {
-    alignItems: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 10,
     padding: 14,
   },
   expenseItemSettled: {
     backgroundColor: '#F3F4F6',
   },
-  expenseContent: {
-    flex: 1,
-    paddingRight: 12,
+  expenseHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  expenseDate: {
+    color: '#6B7280',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  expenseBody: {
+    marginBottom: 12,
   },
   expenseAmount: {
     color: '#222222',
-    fontSize: 18,
+    fontSize: 26,
     fontWeight: '700',
   },
   expenseCategory: {
@@ -167,8 +177,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   expenseActions: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
+    justifyContent: 'flex-end',
   },
   expenseBadge: {
     backgroundColor: '#EEF2F7',
