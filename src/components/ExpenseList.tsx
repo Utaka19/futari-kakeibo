@@ -42,7 +42,7 @@ function ExpenseItem({
   onEdit: (expense: Expense) => void;
   onUnsettle: (id: string) => void;
 }) {
-  const isSplitTarget = expense.isShared && expense.isSplit && !expense.isSettled;
+  const badge = getExpenseBadge(expense);
 
   return (
     <View style={[styles.expenseItem, expense.isSettled && styles.expenseItemSettled]}>
@@ -58,10 +58,12 @@ function ExpenseItem({
         <Text
           style={[
             styles.expenseBadge,
-            isSplitTarget && styles.expenseBadgeTarget,
-            expense.isSettled && styles.expenseBadgeSettled,
+            badge.type === 'splitTarget' && styles.expenseBadgeTarget,
+            badge.type === 'shared' && styles.expenseBadgeShared,
+            badge.type === 'personal' && styles.expenseBadgePersonal,
+            badge.type === 'settled' && styles.expenseBadgeSettled,
           ]}>
-          {expense.isSettled ? '精算済み' : isSplitTarget ? '折半対象' : '対象外'}
+          {badge.label}
         </Text>
         {expense.isSettled && (
           <Pressable style={styles.unsettleButton} onPress={() => onUnsettle(expense.id)}>
@@ -77,6 +79,39 @@ function ExpenseItem({
       </View>
     </View>
   );
+}
+
+type ExpenseBadge = {
+  label: string;
+  type: 'personal' | 'settled' | 'shared' | 'splitTarget';
+};
+
+function getExpenseBadge(expense: Expense): ExpenseBadge {
+  if (expense.isSettled) {
+    return {
+      label: '精算済み',
+      type: 'settled',
+    };
+  }
+
+  if (expense.isShared && expense.isSplit) {
+    return {
+      label: '精算対象',
+      type: 'splitTarget',
+    };
+  }
+
+  if (expense.isShared) {
+    return {
+      label: 'ふたりの支出',
+      type: 'shared',
+    };
+  }
+
+  return {
+    label: '個人支出',
+    type: 'personal',
+  };
 }
 
 const styles = StyleSheet.create({
@@ -148,6 +183,14 @@ const styles = StyleSheet.create({
   expenseBadgeTarget: {
     backgroundColor: '#DBEAFE',
     color: '#1D4ED8',
+  },
+  expenseBadgeShared: {
+    backgroundColor: '#DCFCE7',
+    color: '#166534',
+  },
+  expenseBadgePersonal: {
+    backgroundColor: '#F3F4F6',
+    color: '#374151',
   },
   expenseBadgeSettled: {
     backgroundColor: '#E5E7EB',
