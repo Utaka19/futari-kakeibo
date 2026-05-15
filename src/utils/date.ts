@@ -17,6 +17,17 @@ export function getCurrentYearMonth(): string {
   return formatYearMonth(new Date());
 }
 
+export function getCurrentBillingYearMonth(startDay: number): string {
+  const today = new Date();
+  const safeStartDay = Math.min(Math.max(startDay, 1), 28);
+
+  if (safeStartDay === 1 || today.getDate() < safeStartDay) {
+    return formatYearMonth(today);
+  }
+
+  return formatYearMonth(new Date(today.getFullYear(), today.getMonth() + 1, 1));
+}
+
 export type BillingPeriod = {
   startDate: string;
   endDate: string;
@@ -93,4 +104,14 @@ export function isDateInBillingPeriod(date: string, period: BillingPeriod): bool
   }
 
   return date >= period.startDate && date <= period.endDate;
+}
+
+export function formatBillingMonthLabel(endDate: string): string {
+  if (!isValidDateInput(endDate)) {
+    return endDate;
+  }
+
+  const [year, month] = endDate.split('-');
+
+  return `${year}年${Number(month)}月分`;
 }

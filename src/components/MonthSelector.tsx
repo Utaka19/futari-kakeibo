@@ -1,51 +1,40 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { getCurrentYearMonth } from '@/src/utils/date';
+import { formatBillingMonthLabel } from '@/src/utils/date';
 
 type MonthSelectorProps = {
-  selectedYearMonth: string;
+  isCurrentPeriod: boolean;
+  periodEndDate: string;
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onGoToCurrentMonth: () => void;
 };
 
 export function MonthSelector({
-  selectedYearMonth,
+  isCurrentPeriod,
+  periodEndDate,
   onPrevMonth,
   onNextMonth,
   onGoToCurrentMonth,
 }: MonthSelectorProps) {
-  const isCurrentMonth = selectedYearMonth === getCurrentYearMonth();
-
   return (
     <View style={styles.container}>
       <View style={styles.monthSwitcher}>
         <Text style={styles.monthButton} onPress={onPrevMonth}>
-          前の月
+          前の期間
         </Text>
-        <Text style={styles.currentMonth}>{formatJapaneseYearMonth(selectedYearMonth)}</Text>
+        <Text style={styles.currentMonth}>{formatBillingMonthLabel(periodEndDate)}</Text>
         <Text style={styles.monthButton} onPress={onNextMonth}>
-          次の月
+          次の期間
         </Text>
       </View>
-      {!isCurrentMonth && (
+      {!isCurrentPeriod && (
         <Text style={styles.currentMonthButton} onPress={onGoToCurrentMonth}>
-          今月へ戻る
+          現在の期間へ戻る
         </Text>
       )}
     </View>
   );
-}
-
-function formatJapaneseYearMonth(yearMonth: string): string {
-  const [year, month] = yearMonth.split('-');
-  const monthNumber = Number(month);
-
-  if (!year || !monthNumber) {
-    return yearMonth;
-  }
-
-  return `${year}年${monthNumber}月`;
 }
 
 const styles = StyleSheet.create({

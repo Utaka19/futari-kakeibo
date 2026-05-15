@@ -13,7 +13,7 @@ import { loadBillingStartDay, saveBillingStartDay } from '@/src/storage/settings
 import type { Expense, ExpenseCategory, Payer } from '@/src/types/expense';
 import {
   formatDateInput,
-  getCurrentYearMonth,
+  getCurrentBillingYearMonth,
   getBillingPeriod,
   isDateInBillingPeriod,
   isValidDateInput,
@@ -35,7 +35,7 @@ export default function HomeScreen() {
   const [isShared, setIsShared] = useState(true);
   const [isSplit, setIsSplit] = useState(true);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
-  const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentYearMonth());
+  const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentBillingYearMonth(1));
   const [billingStartDay, setBillingStartDay] = useState(1);
   const [amountErrorMessage, setAmountErrorMessage] = useState('');
   const [dateErrorMessage, setDateErrorMessage] = useState('');
@@ -61,6 +61,7 @@ export default function HomeScreen() {
     [visibleExpenses],
   );
   const hasSettlementTarget = settlement.targetTotal > 0;
+  const isCurrentPeriod = selectedYearMonth === getCurrentBillingYearMonth(billingStartDay);
 
   useEffect(() => {
     const restoreAppState = async () => {
@@ -71,6 +72,7 @@ export default function HomeScreen() {
 
       setExpenses(savedExpenses);
       setBillingStartDay(savedBillingStartDay);
+      setSelectedYearMonth(getCurrentBillingYearMonth(savedBillingStartDay));
     };
 
     restoreAppState();
@@ -246,7 +248,7 @@ export default function HomeScreen() {
   };
 
   const handleGoToCurrentMonth = () => {
-    setSelectedYearMonth(getCurrentYearMonth());
+    setSelectedYearMonth(getCurrentBillingYearMonth(billingStartDay));
   };
 
   const decreaseBillingStartDay = () => {
@@ -281,7 +283,8 @@ export default function HomeScreen() {
           </View>
 
           <MonthSelector
-            selectedYearMonth={selectedYearMonth}
+            isCurrentPeriod={isCurrentPeriod}
+            periodEndDate={billingPeriod.endDate}
             onPrevMonth={moveToPrevMonth}
             onNextMonth={moveToNextMonth}
             onGoToCurrentMonth={handleGoToCurrentMonth}
