@@ -60,22 +60,22 @@ export function ExpenseForm({
     <View style={styles.form}>
       {isEditing && <Text style={styles.editingText}>支出を編集中です</Text>}
 
-      <View style={styles.labelRow}>
-        <Text style={styles.label}>金額</Text>
-        <Text
-          style={styles.calculatorToggle}
+      <Text style={styles.label}>金額</Text>
+      <View style={styles.amountRow}>
+        <TextInput
+          value={amountText}
+          onChangeText={onAmountTextChange}
+          keyboardType="number-pad"
+          maxLength={8}
+          placeholder="例: 3200"
+          style={[styles.input, styles.amountInput, amountErrorMessage && styles.inputError]}
+        />
+        <Pressable
+          style={styles.calculatorButton}
           onPress={() => setIsCalculatorOpen((current) => !current)}>
-          計算
-        </Text>
+          <Text style={styles.calculatorButtonText}>計算</Text>
+        </Pressable>
       </View>
-      <TextInput
-        value={amountText}
-        onChangeText={onAmountTextChange}
-        keyboardType="number-pad"
-        maxLength={8}
-        placeholder="例: 3200"
-        style={[styles.input, amountErrorMessage && styles.inputError]}
-      />
       {!!amountErrorMessage && <Text style={styles.errorText}>{amountErrorMessage}</Text>}
       {isCalculatorOpen && <AmountCalculator onApply={applyCalculatedAmount} />}
 
@@ -89,35 +89,36 @@ export function ExpenseForm({
         />
       </View>
 
-      <Text style={styles.label}>カテゴリ</Text>
-      <View style={styles.categoryGrid}>
-        {categories.map((item) => (
-          <SegmentButton
-            key={item}
-            active={category === item}
-            label={item}
-            onPress={() => onCategoryChange(item)}
-          />
-        ))}
+      <View style={styles.dateCategoryGroup}>
+        <Text style={styles.label}>日付</Text>
+        <TextInput
+          value={date}
+          onChangeText={onDateChange}
+          maxLength={10}
+          placeholder="例: 2026-05-05"
+          style={[styles.input, styles.compactInput, dateErrorMessage && styles.inputError]}
+        />
+        <Text style={styles.label}>カテゴリ</Text>
+        <View style={styles.categoryGrid}>
+          {categories.map((item) => (
+            <SegmentButton
+              key={item}
+              active={category === item}
+              label={item}
+              onPress={() => onCategoryChange(item)}
+            />
+          ))}
+        </View>
       </View>
+      {!!dateErrorMessage && <Text style={styles.errorText}>{dateErrorMessage}</Text>}
 
       <Text style={styles.label}>メモ</Text>
       <TextInput
         value={memo}
         onChangeText={onMemoChange}
         placeholder="例: ランチ"
-        style={[styles.input, styles.memoInput]}
+        style={[styles.input, styles.compactInput, styles.memoInput]}
       />
-
-      <Text style={styles.label}>日付</Text>
-      <TextInput
-        value={date}
-        onChangeText={onDateChange}
-        maxLength={10}
-        placeholder="例: 2026-05-05"
-        style={[styles.input, dateErrorMessage && styles.inputError]}
-      />
-      {!!dateErrorMessage && <Text style={styles.errorText}>{dateErrorMessage}</Text>}
 
       <ToggleRow label="ふたりの支出" value={isShared} onValueChange={onIsSharedChange} />
       {isShared && <ToggleRow label="精算対象" value={isSplit} onValueChange={onIsSplitChange} />}
@@ -171,9 +172,9 @@ const styles = StyleSheet.create({
   form: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
-    gap: 12,
+    gap: 9,
     marginTop: 16,
-    padding: 16,
+    padding: 14,
   },
   editingText: {
     backgroundColor: '#FEF3C7',
@@ -187,40 +188,53 @@ const styles = StyleSheet.create({
   },
   label: {
     color: '#333333',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
-  labelRow: {
+  amountRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 8,
   },
-  calculatorToggle: {
+  amountInput: {
+    flex: 1,
+  },
+  calculatorButton: {
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF',
+    borderRadius: 8,
+    minWidth: 64,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  calculatorButtonText: {
     color: '#2563EB',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 4,
   },
   input: {
     backgroundColor: '#F4F4F4',
     borderColor: '#DDDDDD',
     borderRadius: 8,
     borderWidth: 1,
-    fontSize: 22,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    fontSize: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  compactInput: {
+    fontSize: 15,
+    paddingVertical: 8,
   },
   inputError: {
     borderColor: '#DC2626',
   },
   errorText: {
     color: '#DC2626',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   memoInput: {
-    fontSize: 16,
+    fontSize: 14,
   },
   segment: {
     backgroundColor: '#EEEEEE',
@@ -231,21 +245,24 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
+  },
+  dateCategoryGroup: {
+    gap: 7,
   },
   segmentButton: {
     alignItems: 'center',
     borderRadius: 6,
     flex: 1,
     minWidth: 92,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
   segmentButtonActive: {
     backgroundColor: '#2563EB',
   },
   segmentButtonText: {
     color: '#555555',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   segmentButtonTextActive: {
@@ -255,19 +272,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 44,
+    minHeight: 38,
   },
   toggleLabel: {
     color: '#333333',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   addButton: {
     alignItems: 'center',
     backgroundColor: '#111827',
     borderRadius: 8,
-    marginTop: 4,
-    paddingVertical: 14,
+    marginTop: 2,
+    paddingVertical: 12,
   },
   addButtonText: {
     color: '#FFFFFF',
@@ -278,7 +295,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F3F4F6',
     borderRadius: 8,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   cancelButtonText: {
     color: '#374151',
